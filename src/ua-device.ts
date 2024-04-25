@@ -490,6 +490,6 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         Object.assign(summery.Machines, maschinesSummery)
 
-        console.log(`OPC UA Client: ServerSummery=${summery}`)
+        console.log(summery)
     }
 }
