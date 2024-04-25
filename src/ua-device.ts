@@ -490,6 +490,6 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         Object.assign(summery.Machines, maschinesSummery)
 
-        console.log(summery)
+        console.log(JSON.stringify(summery, null, '\t'))
     }
 }
