@@ -91,13 +91,14 @@ const optionsInitial: OPCUAClientOptions = {
     //      * a client name string that will be used to generate session names.
     //      */
     //     clientName?: string;
+    clientName: "opcua-machinery-client",
     requestedSessionTimeout: 60*60*1000,
     endpointMustExist: false,
     keepSessionAlive: true,
     connectionStrategy: {
         initialDelay: 1000,
         maxDelay: 5000,
-        maxRetry: 5
+        maxRetry: 100
     },
 };
 
@@ -130,6 +131,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private subscription: ClientSubscription | undefined
 
     private namespaceArray: string[] = []
+    private serverPrfileArray: string[] = []
     private serverState: number = ServerState.Unknown
     private serviceLevel: number = 0
 
@@ -213,9 +215,8 @@ export class OpcUaDeviceClass extends EventEmitter {
             return
         }
         await this.readNameSpaceArray()
+        await this.readServerProfileArray()
         await this.readDeviceLimits()
-
-        // TODO: read ServerProfileArray
 
         Object.assign(this._summery, {
             Server: {
@@ -223,10 +224,9 @@ export class OpcUaDeviceClass extends EventEmitter {
                 ServerState: this.serverState,
                 ServiceLevel: this.serviceLevel,
                 NamespaceArray: this.namespaceArray,
-                // ServerProfileArray
+                ServerProfileArray: this.serverPrfileArray,
                 OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
             },
-            FoundMachines: this.foundMachines,
             Machines: Object.fromEntries(this.machines.entries())
         })
 
@@ -279,8 +279,11 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     async disconnect() {
+        console.log(`OPC UA Client: terminating Subscription!`)
         await this.subscription?.terminate()
+        console.log(`OPC UA Client: closing Session!`)
         await this.session?.close()
+        console.log(`OPC UA Client: diconnecting!`)
         await this.client.disconnect()
     }
 
@@ -460,10 +463,19 @@ export class OpcUaDeviceClass extends EventEmitter {
         if (isStatusCodeGoodish(readResults[5].statusCode)) this.deviceLimits.set("MaxNodesPerTranslateBrowsePathsToNodeIds", readResults[5].value.value)
         if (isStatusCodeGoodish(readResults[6].statusCode)) this.deviceLimits.set("MaxNodesPerWrite", readResults[6].value.value)
 
-        this.deviceLimits.forEach((value, key) => {
-            console.log(`OPC UA Client: UaDeviceLimit -> '${key}': '${value}'`)
-        })
+        console.log(`OPC UA Client: UaDeviceLimits -> '${JSON.stringify(Object.fromEntries(this.deviceLimits.entries()), null, "\t")}'`)
     }
+
+    private async readServerProfileArray() {
+        // i=2269 [Server_ServerCapabilities_ServerProfileArray]
+        const dv = await this.session!.read({
+            nodeId: "i=2269",
+            attributeId: AttributeIds.Value
+        })
+        // check statuscode!
+        this.serverPrfileArray = dv!.value.value
+        console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${this.serverPrfileArray}]' StatusCode '${dv.statusCode.name}'`)
+    }   
 
     private getNamespaceIndex(uri: string): number | undefined {
         const index = this.namespaceArray.indexOf(uri)
@@ -473,6 +485,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private async discoverMachines() {
         for (let index = 0; index < this.foundMachines.length; index++) {
             const machineNodeId = this.foundMachines[index]
+            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${this.foundMachines.length}] -> id='${machineNodeId}'`)
             const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
@@ -480,7 +493,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         this._summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         // console.log(JSON.stringify(this._summery, null, '\t'))
         writeJson("output.json", this._summery, {spaces: '\t'})
-        console.log("DONE !!!")
+        console.log("OPC UA Client: 'output.json' created!")
+        await this.disconnect()
     }
 
     private async findMachinesOnServer() {
@@ -499,9 +513,9 @@ export class OpcUaDeviceClass extends EventEmitter {
             referenceTypeId: ReferenceTypeIds.Organizes
         } as BrowseDescriptionLike)
         browseResult.references!.forEach((result) => {
-            console.log(`OPC UA Client: found machine instance id='${result.nodeId.toString()}'`)
             this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
         })
+        console.log(`OPC UA Client: found '${this.foundMachines.length}' machine instances -> [${this.foundMachines}]`)
         // console.log(JSON.stringify(this._summery, null, '\t'))
     }
 }
