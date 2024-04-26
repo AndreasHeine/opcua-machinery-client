@@ -27,7 +27,7 @@ import {
     MonitoringMode,
     BrowsePath,
     makeBrowsePath,
-    ReferenceDescription,
+    // ReferenceDescription,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -519,7 +519,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                     referenceTypeId: ReferenceTypeIds.HasProperty
                 } as BrowseDescriptionLike)
                 for (let i = 0; i < identificationBrowseResult.references!.length; i++) {
-                    console.log(JSON.stringify(identificationBrowseResult!.references! as ReferenceDescription[], null, '\t'))
+                    // console.log(JSON.stringify(identificationBrowseResult!.references! as ReferenceDescription[], null, '\t'))
                     const nodeId = identificationBrowseResult!.references![i].nodeId
                     const readResults = await this.session!.read([
                         {
