@@ -22,7 +22,9 @@ import {
     ReferenceTypeIds,
     ReadValueIdOptions,
     QualifiedName,
-    LocalizedText
+    LocalizedText,
+    MonitoringParametersOptions,
+    MonitoringMode
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -133,6 +135,10 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     readonly deviceLimits: Map<string, any> = new Map()
 
+    private foundMachines: string[] = []
+    private machines: Map<string, any> = new Map()
+    private _summery = Object.create({})
+
     reinitializing: boolean = false
 
     constructor (endpoint: string) {
@@ -209,6 +215,21 @@ export class OpcUaDeviceClass extends EventEmitter {
         await this.readNameSpaceArray()
         await this.readDeviceLimits()
 
+        // TODO: read ServerProfileArray
+
+        Object.assign(this._summery, {
+            Server: {
+                Endpoint: this.endpoint,
+                ServerState: this.serverState,
+                ServiceLevel: this.serviceLevel,
+                NamespaceArray: this.namespaceArray,
+                // ServerProfileArray
+                OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
+            },
+            FoundMachines: this.foundMachines,
+            Machines: Object.fromEntries(this.machines.entries())
+        })
+
         this.subscription = await this.session!.createSubscription2(createSubscriptionRequest)
         this.subscription.on("status_changed", (status: StatusCode, diagnosticInfo: DiagnosticInfo) => {
             console.log(`OPC UA Client: Subscription status_changed! - ${status} - ${diagnosticInfo}`)
@@ -226,8 +247,35 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.error(`OPC UA Client: Subscription internal_error! - ${err}`)
         })
 
+        const serverTimeMonitoredItem = await this.subscription.monitor(
+            {
+                // nodeId?: (NodeIdLike | null);
+                // attributeId?: UInt32;
+                // indexRange?: NumericRange;
+                // dataEncoding?: (QualifiedNameLike | null);
+                nodeId: "i=2258",
+                attributeId: AttributeIds.Value
+            } as ReadValueIdOptions,
+            {
+                // clientHandle?: UInt32;
+                // samplingInterval?: Double;
+                // filter?: (ExtensionObject | null);
+                // queueSize?: UInt32;
+                // discardOldest?: UABoolean;
+                samplingInterval: 5000,
+                queueSize: 1,
+                discardOldest: false
+            } as MonitoringParametersOptions,
+            TimestampsToReturn.Both,
+            MonitoringMode.Reporting
+        )
+        serverTimeMonitoredItem.on("changed", (dataValue: DataValue) => {
+            // add to summery
+        })
+
         await this.setupChangeEvents()
-        await this.discoverMachinesOnServer()
+        await this.findMachinesOnServer()
+        await this.discoverMachines()
     }
 
     async disconnect() {
@@ -422,45 +470,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         return index === -1 ? undefined : index
     }
 
-    private async discoverMachinesOnServer() {
-        const machineryIndex = this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")
-        if (machineryIndex === undefined) return
+    private async discoverMachines() {
 
-        const summery = {
-            Server: {
-                Endpoint: this.endpoint,
-                ServerState: this.serverState,
-                ServiceLevel: this.serviceLevel,
-                NamespaceArray: this.namespaceArray,
-                OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
-            },
-            Machines: Object.create({})
-
-        }
-
-        const machinesFolderNodeId = `ns=${machineryIndex};i=1001`
-        
-        const browseResult = await this.session!.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
-            nodeId: machinesFolderNodeId,
-            browseDirection: BrowseDirection.Forward,
-            referenceTypeId: ReferenceTypeIds.Organizes
-        } as BrowseDescriptionLike)
-
-        const machineList: string[] = []
-        browseResult.references!.forEach((result) => {
-            console.log(`OPC UA Client: found machine instance id='${result.nodeId.toString()}'`)
-            machineList.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
-        })
-
-        const maschinesSummery = Object.create({})
-
-        await Promise.all(machineList.map(async (id: string) => {
+        await Promise.all(this.foundMachines.map(async (id: string) => {
             const readResult = await this.session!.read([
                 {
                     nodeId: id,
@@ -480,16 +492,41 @@ export class OpcUaDeviceClass extends EventEmitter {
             const browseName = readResult[1].value.value
             const description = readResult[2].value.value
 
-            maschinesSummery[`${displayName.text}`] = {
+            this.machines.set(`${displayName.text}`, {
                 NodeId: id,
                 BrowseName: (browseName as QualifiedName).toJSON(),
                 DisplayName: (displayName as LocalizedText).toJSON(),
-                Description: (description as LocalizedText).toJSON()
-            }
+                Description: (description as LocalizedText).toJSON(),
+                Identification: null,
+                OperationalMode: null,
+                ItemState: null,
+                Monitoring: null
+            })
         }))
 
-        Object.assign(summery.Machines, maschinesSummery)
+        Object.assign(this._summery.Machines, Object.fromEntries(this.machines.entries()))
+        console.log(JSON.stringify(this._summery, null, '\t'))
+    }
 
-        console.log(JSON.stringify(summery, null, '\t'))
+    private async findMachinesOnServer() {
+        const machineryIndex = this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")
+        if (machineryIndex === undefined) return
+        const machinesFolderNodeId = `ns=${machineryIndex};i=1001` // id is defined in spec. and can be hardcoded!
+        const browseResult = await this.session!.browse({
+            // nodeId?: (NodeIdLike | null);
+            // browseDirection?: BrowseDirection;
+            // referenceTypeId?: (NodeIdLike | null);
+            // includeSubtypes?: UABoolean;
+            // nodeClassMask?: UInt32;
+            // resultMask?: UInt32;
+            nodeId: machinesFolderNodeId,
+            browseDirection: BrowseDirection.Forward,
+            referenceTypeId: ReferenceTypeIds.Organizes
+        } as BrowseDescriptionLike)
+        browseResult.references!.forEach((result) => {
+            console.log(`OPC UA Client: found machine instance id='${result.nodeId.toString()}'`)
+            this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
+        })
+        console.log(JSON.stringify(this._summery, null, '\t'))
     }
 }
