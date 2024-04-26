@@ -24,7 +24,10 @@ import {
     QualifiedName,
     LocalizedText,
     MonitoringParametersOptions,
-    MonitoringMode
+    MonitoringMode,
+    BrowsePath,
+    makeBrowsePath,
+    ReferenceDescription
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -471,19 +474,19 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async discoverMachines() {
-
-        await Promise.all(this.foundMachines.map(async (id: string) => {
+        for (let index = 0; index < this.foundMachines.length; index++) {
+            const machineNodeId = this.foundMachines[index]
             const readResult = await this.session!.read([
                 {
-                    nodeId: id,
+                    nodeId: machineNodeId,
                     attributeId: AttributeIds.DisplayName
                 } as ReadValueIdOptions,
                 {
-                    nodeId: id,
+                    nodeId: machineNodeId,
                     attributeId: AttributeIds.BrowseName
                 } as ReadValueIdOptions,
                 {
-                    nodeId: id,
+                    nodeId: machineNodeId,
                     attributeId: AttributeIds.Description
                 } as ReadValueIdOptions,
             ])
@@ -492,18 +495,65 @@ export class OpcUaDeviceClass extends EventEmitter {
             const browseName = readResult[1].value.value
             const description = readResult[2].value.value
 
+            const identification = Object.create({})
+
+            const translateBrowsePathResult = await this.session!.translateBrowsePath([
+                makeBrowsePath(machineNodeId, `/${this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")!}:Identification`),
+            ] as BrowsePath[])
+
+            console.log(JSON.stringify(translateBrowsePathResult, null, '\t'))
+
+            // check statuscode is not 2154758144
+            if (translateBrowsePathResult![0].statusCode.value === 0) {
+                // Identification
+                const result = translateBrowsePathResult![0].targets
+                const identificationNodeId = makeNodeIdStringFromExpandedNodeId(result![0].targetId)
+                const identificationBrowseResult = await this.session!.browse({
+                    // nodeId?: (NodeIdLike | null);
+                    // browseDirection?: BrowseDirection;
+                    // referenceTypeId?: (NodeIdLike | null);
+                    // includeSubtypes?: UABoolean;
+                    // nodeClassMask?: UInt32;
+                    // resultMask?: UInt32;
+                    nodeId: identificationNodeId,
+                    browseDirection: BrowseDirection.Forward,
+                    referenceTypeId: ReferenceTypeIds.HasProperty
+                } as BrowseDescriptionLike)
+                for (let i = 0; i < identificationBrowseResult.references!.length; i++) {
+                    console.log(JSON.stringify(identificationBrowseResult!.references! as ReferenceDescription[], null, '\t'))
+                    const nodeId = identificationBrowseResult!.references![i].nodeId
+                    const readResults = await this.session!.read([
+                        {
+                            nodeId: nodeId,
+                            attributeId: AttributeIds.DisplayName
+                        } as ReadValueIdOptions,
+                        {
+                            nodeId: nodeId,
+                            attributeId: AttributeIds.Value
+                        } as ReadValueIdOptions,
+                    ])
+                    // DataTypes!?
+                    identification[`${readResults[0].value.value.text}`] = readResults[1].value.value.toString()
+                }
+            }
+
+            // MachineryBuildingBlocks
+                // ItemState
+                // OperationalMode
+            // Monitoring
+                // ProcessValues
+
             this.machines.set(`${displayName.text}`, {
-                NodeId: id,
+                NodeId: this.foundMachines[index],
                 BrowseName: (browseName as QualifiedName).toJSON(),
                 DisplayName: (displayName as LocalizedText).toJSON(),
                 Description: (description as LocalizedText).toJSON(),
-                Identification: null,
+                Identification: identification,
                 OperationalMode: null,
                 ItemState: null,
                 Monitoring: null
             })
-        }))
-
+        }
         Object.assign(this._summery.Machines, Object.fromEntries(this.machines.entries()))
         console.log(JSON.stringify(this._summery, null, '\t'))
     }
@@ -527,6 +577,6 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: found machine instance id='${result.nodeId.toString()}'`)
             this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
         })
-        console.log(JSON.stringify(this._summery, null, '\t'))
+        // console.log(JSON.stringify(this._summery, null, '\t'))
     }
 }
