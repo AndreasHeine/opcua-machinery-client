@@ -535,7 +535,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                     identification[`${readResults[0].value.value.text}`] = readResults[1].value.value.toString()
                 }
             } else {
-                console.log(`translateBrowsePath failed! id='${machineNodeId}' name='${displayName.text}'`)
+                console.log(`OPC UA Client: translateBrowsePath failed! id='${machineNodeId}' name='${displayName.text}'`)
             }
 
             // MachineryBuildingBlocks
