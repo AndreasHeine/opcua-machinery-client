@@ -6,7 +6,7 @@ const UaDevice = new OpcUaDeviceClass("opc.tcp://opcua.umati.app:4843")
     function shutdown() {
         console.log(`OPC UA Client: shutdown requested`)
         UaDevice.disconnect().then(() => {
-            console.warn('OPC-UA-Client: shutting down completed')
+            console.warn('OPC-UA-Client: shutdown completed')
             process.exit(0)
         })
     }
