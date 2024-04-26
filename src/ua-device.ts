@@ -321,8 +321,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         )
         baseModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
-            console.warn(`OPC UA Client: BaseModelChangeEvent received! dataValue='${dataValue.toJSON()}'`)
-            if (!this.reinitializing) await this.reinitialize()
+            console.warn(`OPC UA Client: BaseModelChangeEvent received!`)
+            // if (!this.reinitializing) await this.reinitialize()
         })
         const generalModelChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -349,8 +349,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         )
         generalModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
-            console.warn(`OPC UA Client: GeneralModelChangeEvent received! dataValue='${dataValue.toJSON()}'`)
-            if (!this.reinitializing) await this.reinitialize()
+            console.warn(`OPC UA Client: GeneralModelChangeEvent received!`)
+            // if (!this.reinitializing) await this.reinitialize()
         })
         const semanticChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -377,8 +377,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         )
         semanticChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/v104/docs/9.33
-            console.warn(`OPC UA Client: SemanticChangeEventType received! dataValue='${dataValue.toJSON()}'`)
-            if (!this.reinitializing) await this.reinitialize()
+            console.warn(`OPC UA Client: SemanticChangeEventType received!`)
+            // if (!this.reinitializing) await this.reinitialize()
         })
     }
 
