@@ -1,0 +1,408 @@
+{
+	"Server": {
+		"Endpoint": "opc.tcp://opcua.umati.app:4843",
+		"ServerState": 0,
+		"ServiceLevel": 255,
+		"NamespaceArray": [
+			"http://opcfoundation.org/UA/",
+			"urn:SampleServer",
+			"http://opcfoundation.org/UA/DI/",
+			"http://opcfoundation.org/UA/Machinery/",
+			"http://opcfoundation.org/UA/IA/",
+			"http://opcfoundation.org/UA/MachineTool/",
+			"http://opcfoundation.org/UA/PlasticsRubber/GeneralTypes/",
+			"http://opcfoundation.org/UA/PlasticsRubber/IMM2MES/",
+			"http://opcfoundation.org/UA/PlasticsRubber/ImmToRobot/",
+			"http://opcfoundation.org/UA/PlasticsRubber/umati/OPC40079ForUmati/",
+			"http://opcfoundation.org/UA/PlasticsRubber/TCD/",
+			"http://opcfoundation.org/UA/PlasticsRubber/HotRunner/",
+			"http://opcfoundation.org/UA/PlasticsRubber/LDS/",
+			"http://opcfoundation.org/UA/PlasticsRubber/Extrusion_v2/GeneralTypes/",
+			"http://opcfoundation.org/UA/PlasticsRubber/Extrusion_v2/Cutter/",
+			"http://opcfoundation.org/UA/PlasticsRubber/Extrusion_v2/HaulOff/",
+			"http://opcfoundation.org/UA/PlasticsRubber/Extrusion_v2/Corrugator/",
+			"http://opcfoundation.org/UA/PlasticsRubber/Extrusion_v2/Extruder/",
+			"http://opcfoundation.org/UA/PlasticsRubber/umati/generic/",
+			"http://opcfoundation.org/UA/Robotics/",
+			"http://opcfoundation.org/UA/Woodworking/",
+			"http://opcfoundation.org/UA/LaserSystems/",
+			"http://example.com/ShowcaseMachineTool/",
+			"http://yourorganisation.org/MachineTool-Example/",
+			"http://vdma.org/OPCRoboticsTestServer/",
+			"http://samplemanufacturer.com/umati_plasticsrubber_generic_sample_instance/",
+			"http://samplemanufacturer.com/umati_OPC40077_sample_instance/",
+			"http://samplemanufacturer.org/opc40079forumati_sample_instance/",
+			"http://samplemanufacturer.com/umati_opc40084-3_sample_instance/",
+			"http://samplemanufacturer.org/umati_opc40082-1_sample_instance/",
+			"http://samplemanufacturer.org/umati_opc40082-2_sample_instance/",
+			"http://samplemanufacturer.org/umati_opc40082-3_sample_instance/",
+			"http://samplemanufacturer.org/umati_opc40084-9_sample_instance/",
+			"http://samplemanufacturer.org/umati_opc40084-11_sample_instance/",
+			"http://basyskom.com/woodworking_demo/",
+			"http://opcfoundation.org/UA/Dictionary/IRDI",
+			"http://opcfoundation.org/UA/PADIM/",
+			"http://opcfoundation.org/UA/Machinery/ProcessValues/",
+			"http://opcfoundation.org/UA/PAEFS/",
+			"http://umati.org/UA/1.5/brownfield/",
+			"http://vdma.org/UA/LaserSystem-Example/",
+			"https://www.grinding.ch/UA/instances/umati/",
+			"http://mynewmachinenamespace/UA"
+		],
+		"OperationalLimits": {
+			"MaxSubscriptionsPerSession": 10,
+			"MaxMonitoredItemsPerSubscription": 100000,
+			"MaxMonitoredItemsPerCall": 1000,
+			"MaxNodesPerMethodCall": 100,
+			"MaxNodesPerRead": 1000,
+			"MaxNodesPerTranslateBrowsePathsToNodeIds": 1000,
+			"MaxNodesPerWrite": 1000
+		}
+	},
+	"FoundMachines": [
+		"ns=22;i=58192",
+		"ns=23;i=5002",
+		"ns=23;i=5015",
+		"ns=24;i=5015",
+		"ns=24;i=5002",
+		"ns=24;i=5018",
+		"ns=25;i=5044",
+		"ns=26;i=5002",
+		"ns=27;i=5004",
+		"ns=28;i=5002",
+		"ns=29;i=5003",
+		"ns=30;i=5003",
+		"ns=31;i=5003",
+		"ns=32;i=5003",
+		"ns=33;i=5003",
+		"ns=34;i=5002",
+		"ns=34;i=5008",
+		"ns=39;i=5004",
+		"ns=40;i=5003",
+		"ns=41;s=MyMachine",
+		"ns=42;s=MyMachine"
+	],
+	"Machines": {
+		"ShowcaseMachineTool": {
+			"NodeId": "ns=22;i=58192",
+			"BrowseName": {
+				"namespaceIndex": 22,
+				"name": "ShowcaseMachineTool"
+			},
+			"DisplayName": {
+				"text": "ShowcaseMachineTool"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"SampleMachineTool": {
+			"NodeId": "ns=23;i=5002",
+			"BrowseName": {
+				"namespaceIndex": 23,
+				"name": "SampleMachineTool"
+			},
+			"DisplayName": {
+				"text": "SampleMachineTool"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"SampleMachineTool_v101": {
+			"NodeId": "ns=23;i=5015",
+			"BrowseName": {
+				"namespaceIndex": 23,
+				"name": "SampleMachineTool_v101"
+			},
+			"DisplayName": {
+				"text": "SampleMachineTool_v101"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"MotionDeviceSystem": {
+			"NodeId": "ns=24;i=5015",
+			"BrowseName": {
+				"namespaceIndex": 24,
+				"name": "MotionDeviceSystem"
+			},
+			"DisplayName": {
+				"text": "MotionDeviceSystem"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"RobotController": {
+			"NodeId": "ns=24;i=5002",
+			"BrowseName": {
+				"namespaceIndex": 24,
+				"name": "RobotController"
+			},
+			"DisplayName": {
+				"text": "RobotController"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"Robot": {
+			"NodeId": "ns=24;i=5018",
+			"BrowseName": {
+				"namespaceIndex": 24,
+				"name": "Robot"
+			},
+			"DisplayName": {
+				"text": "Robot"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"GenericUmatiMachine": {
+			"NodeId": "ns=25;i=5044",
+			"BrowseName": {
+				"namespaceIndex": 25,
+				"name": "GenericUmatiMachine"
+			},
+			"DisplayName": {
+				"text": "GenericUmatiMachine"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"IMM_SampleManufacturer_12345": {
+			"NodeId": "ns=26;i=5002",
+			"BrowseName": {
+				"namespaceIndex": 26,
+				"name": "IMM_SampleManufacturer_12345"
+			},
+			"DisplayName": {
+				"text": "IMM_SampleManufacturer_12345"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"SampleImmRobotCell": {
+			"NodeId": "ns=27;i=5004",
+			"BrowseName": {
+				"namespaceIndex": 27,
+				"name": "SampleImmRobotCell"
+			},
+			"DisplayName": {
+				"text": "SampleImmRobotCell"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"Extruder_SampleManufacturer_987": {
+			"NodeId": "ns=28;i=5002",
+			"BrowseName": {
+				"namespaceIndex": 28,
+				"name": "Extruder_SampleManufacturer_987"
+			},
+			"DisplayName": {
+				"text": "Extruder_SampleManufacturer_987"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"TCD_SampleManufacturer_1234": {
+			"NodeId": "ns=29;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 29,
+				"name": "TCD_SampleManufacturer_1234"
+			},
+			"DisplayName": {
+				"text": "TCD_SampleManufacturer_1234"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"HRD_SampleManufacturer_1234": {
+			"NodeId": "ns=30;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 30,
+				"name": "HRD_SampleManufacturer_1234"
+			},
+			"DisplayName": {
+				"text": "HRD_SampleManufacturer_1234"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"LDS_samplemanufacturer_1234": {
+			"NodeId": "ns=31;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 31,
+				"name": "LDS_samplemanufacturer_1234"
+			},
+			"DisplayName": {
+				"text": "LDS_samplemanufacturer_1234"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"Cutter_SampleManufacturer_1234": {
+			"NodeId": "ns=32;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 32,
+				"name": "Cutter_SampleManufacturer_1234"
+			},
+			"DisplayName": {
+				"text": "Cutter_SampleManufacturer_1234"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"Corrugator_SampleManufacturer_1234": {
+			"NodeId": "ns=33;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 33,
+				"name": "Corrugator_SampleManufacturer_1234"
+			},
+			"DisplayName": {
+				"text": "Corrugator_SampleManufacturer_1234"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"BasicWoodworking": {
+			"NodeId": "ns=34;i=5002",
+			"BrowseName": {
+				"namespaceIndex": 34,
+				"name": "BasicWoodworking"
+			},
+			"DisplayName": {
+				"text": "BasicWoodworking"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"FullWoodworking": {
+			"NodeId": "ns=34;i=5008",
+			"BrowseName": {
+				"namespaceIndex": 34,
+				"name": "FullWoodworking"
+			},
+			"DisplayName": {
+				"text": "FullWoodworking"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"MachineTool_brownfield": {
+			"NodeId": "ns=39;i=5004",
+			"BrowseName": {
+				"namespaceIndex": 39,
+				"name": "MachineTool_brownfield"
+			},
+			"DisplayName": {
+				"text": "MachineTool_brownfield"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"LaserSystem-Example": {
+			"NodeId": "ns=40;i=5003",
+			"BrowseName": {
+				"namespaceIndex": 40,
+				"name": "LaserSystem-Example"
+			},
+			"DisplayName": {
+				"text": "LaserSystem-Example"
+			},
+			"Description": {},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"MÄGERLE 0200018447 UGG0001": {
+			"NodeId": "ns=41;s=MyMachine",
+			"BrowseName": {
+				"namespaceIndex": 41,
+				"name": "MÄGERLE 0200018447 UGG0001"
+			},
+			"DisplayName": {
+				"text": "MÄGERLE 0200018447 UGG0001"
+			},
+			"Description": {
+				"text": "Main entry point of 'umati' model."
+			},
+			"Identification": {},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		},
+		"MyMachine": {
+			"NodeId": "ns=42;s=MyMachine",
+			"BrowseName": {
+				"namespaceIndex": 42,
+				"name": "MyMachine"
+			},
+			"DisplayName": {
+				"text": "MyMachine"
+			},
+			"Description": {},
+			"Identification": {
+				"ProductInstanceUri": "",
+				"Manufacturer": "locale=null text=Andreas Heine",
+				"Model": "locale=null text=null",
+				"SerialNumber": ""
+			},
+			"OperationalMode": null,
+			"ItemState": null,
+			"Monitoring": null
+		}
+	}
+}

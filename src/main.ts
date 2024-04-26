@@ -9,7 +9,8 @@ function shutdown() {
     try {
         process.on('SIGINT', shutdown)
         process.on('SIGTERM', shutdown)
-        const UaDevice = new OpcUaDeviceClass("opc.tcp://127.0.0.1:4840")
+        // const UaDevice = new OpcUaDeviceClass("opc.tcp://127.0.0.1:4840")
+        const UaDevice = new OpcUaDeviceClass("opc.tcp://opcua.umati.app:4843")
         console.log('OPC-UA-Client: connecting...')
         await UaDevice.initialize()
     } catch (error: any) {

@@ -27,12 +27,13 @@ import {
     MonitoringMode,
     BrowsePath,
     makeBrowsePath,
-    ReferenceDescription
+    ReferenceDescription,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
     makeNodeIdStringFromExpandedNodeId
 } from './ua-helper';
+import { writeJson } from 'fs-extra';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -501,8 +502,6 @@ export class OpcUaDeviceClass extends EventEmitter {
                 makeBrowsePath(machineNodeId, `/${this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")!}:Identification`),
             ] as BrowsePath[])
 
-            console.log(JSON.stringify(translateBrowsePathResult, null, '\t'))
-
             // check statuscode is not 2154758144
             if (translateBrowsePathResult![0].statusCode.value === 0) {
                 // Identification
@@ -535,6 +534,8 @@ export class OpcUaDeviceClass extends EventEmitter {
                     // DataTypes!?
                     identification[`${readResults[0].value.value.text}`] = readResults[1].value.value.toString()
                 }
+            } else {
+                console.log(`translateBrowsePath failed! id='${machineNodeId}' name='${displayName.text}'`)
             }
 
             // MachineryBuildingBlocks
@@ -556,6 +557,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         }
         Object.assign(this._summery.Machines, Object.fromEntries(this.machines.entries()))
         console.log(JSON.stringify(this._summery, null, '\t'))
+        writeJson("output.json", this._summery, {spaces: '\t'})
     }
 
     private async findMachinesOnServer() {
