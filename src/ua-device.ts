@@ -21,19 +21,15 @@ import {
     BrowseDirection,
     ReferenceTypeIds,
     ReadValueIdOptions,
-    QualifiedName,
-    LocalizedText,
     MonitoringParametersOptions,
     MonitoringMode,
-    BrowsePath,
-    makeBrowsePath,
-    // ReferenceDescription,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
     makeNodeIdStringFromExpandedNodeId
 } from './ua-helper';
 import { writeJson } from 'fs-extra';
+import { UaMachineryMachine } from './ua-machine';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -477,122 +473,14 @@ export class OpcUaDeviceClass extends EventEmitter {
     private async discoverMachines() {
         for (let index = 0; index < this.foundMachines.length; index++) {
             const machineNodeId = this.foundMachines[index]
-            const readResult = await this.session!.read([
-                {
-                    nodeId: machineNodeId,
-                    attributeId: AttributeIds.DisplayName
-                } as ReadValueIdOptions,
-                {
-                    nodeId: machineNodeId,
-                    attributeId: AttributeIds.BrowseName
-                } as ReadValueIdOptions,
-                {
-                    nodeId: machineNodeId,
-                    attributeId: AttributeIds.Description
-                } as ReadValueIdOptions,
-            ])
-
-            const displayName = readResult[0].value.value
-            const browseName = readResult[1].value.value
-            const description = readResult[2].value.value
-
-            const identification = Object.create({})
-
-            const translateBrowsePathResult = await this.session!.translateBrowsePath([
-                makeBrowsePath(machineNodeId, `/${this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")!}:Identification`),
-                makeBrowsePath(machineNodeId, `/${this.getNamespaceIndex("http://opcfoundation.org/UA/DI/")!}:Identification`),
-            ] as BrowsePath[])
-
-            // check statuscode is not 2154758144
-            if (translateBrowsePathResult![0].statusCode.value === 0) {
-                // Identification
-                const result = translateBrowsePathResult![0].targets
-                const identificationNodeId = makeNodeIdStringFromExpandedNodeId(result![0].targetId)
-                const identificationBrowseResult = await this.session!.browse({
-                    // nodeId?: (NodeIdLike | null);
-                    // browseDirection?: BrowseDirection;
-                    // referenceTypeId?: (NodeIdLike | null);
-                    // includeSubtypes?: UABoolean;
-                    // nodeClassMask?: UInt32;
-                    // resultMask?: UInt32;
-                    nodeId: identificationNodeId,
-                    browseDirection: BrowseDirection.Forward,
-                    referenceTypeId: ReferenceTypeIds.HasProperty
-                } as BrowseDescriptionLike)
-                for (let i = 0; i < identificationBrowseResult.references!.length; i++) {
-                    // console.log(JSON.stringify(identificationBrowseResult!.references! as ReferenceDescription[], null, '\t'))
-                    const nodeId = identificationBrowseResult!.references![i].nodeId
-                    const readResults = await this.session!.read([
-                        {
-                            nodeId: nodeId,
-                            attributeId: AttributeIds.DisplayName
-                        } as ReadValueIdOptions,
-                        {
-                            nodeId: nodeId,
-                            attributeId: AttributeIds.Value
-                        } as ReadValueIdOptions,
-                    ])
-                    // DataTypes!?
-                    identification[`${readResults[0].value.value.text}`] = readResults[1].value.value.toString()
-                }
-            } else {
-                console.log(`OPC UA Client: translateBrowsePath failed for OPC for Machinery! id='${machineNodeId}' name='${displayName.text}'`)
-                if (translateBrowsePathResult![1].statusCode.value === 0) {
-                    // Identification
-                    const result = translateBrowsePathResult![1].targets
-                    const identificationNodeId = makeNodeIdStringFromExpandedNodeId(result![0].targetId)
-                    const identificationBrowseResult = await this.session!.browse({
-                        // nodeId?: (NodeIdLike | null);
-                        // browseDirection?: BrowseDirection;
-                        // referenceTypeId?: (NodeIdLike | null);
-                        // includeSubtypes?: UABoolean;
-                        // nodeClassMask?: UInt32;
-                        // resultMask?: UInt32;
-                        nodeId: identificationNodeId,
-                        browseDirection: BrowseDirection.Forward,
-                        referenceTypeId: ReferenceTypeIds.HasProperty
-                    } as BrowseDescriptionLike)
-                    for (let i = 0; i < identificationBrowseResult.references!.length; i++) {
-                        // console.log(JSON.stringify(identificationBrowseResult!.references! as ReferenceDescription[], null, '\t'))
-                        const nodeId = identificationBrowseResult!.references![i].nodeId
-                        const readResults = await this.session!.read([
-                            {
-                                nodeId: nodeId,
-                                attributeId: AttributeIds.DisplayName
-                            } as ReadValueIdOptions,
-                            {
-                                nodeId: nodeId,
-                                attributeId: AttributeIds.Value
-                            } as ReadValueIdOptions,
-                        ])
-                        // DataTypes!?
-                        identification[`${readResults[0].value.value.text}`] = readResults[1].value.value.toString()
-                    }
-                } else {
-                    console.log(`OPC UA Client: translateBrowsePath failed for OPC for Devices! id='${machineNodeId}' name='${displayName.text}'`)
-                }
-            }
-
-            // MachineryBuildingBlocks
-                // ItemState
-                // OperationalMode
-            // Monitoring
-                // ProcessValues
-
-            this.machines.set(`${displayName.text}`, {
-                NodeId: this.foundMachines[index],
-                BrowseName: (browseName as QualifiedName).toJSON(),
-                DisplayName: (displayName as LocalizedText).toJSON(),
-                Description: (description as LocalizedText).toJSON(),
-                Identification: identification,
-                OperationalMode: null,
-                ItemState: null,
-                Monitoring: null
-            })
+            const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
+            await uaMachine.initialize()
+            this.machines.set(`${machineNodeId}`, uaMachine)
         }
-        Object.assign(this._summery.Machines, Object.fromEntries(this.machines.entries()))
-        console.log(JSON.stringify(this._summery, null, '\t'))
+        this._summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
+        // console.log(JSON.stringify(this._summery, null, '\t'))
         writeJson("output.json", this._summery, {spaces: '\t'})
+        console.log("DONE !!!")
     }
 
     private async findMachinesOnServer() {

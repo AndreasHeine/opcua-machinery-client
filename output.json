@@ -81,495 +81,515 @@
 		"ns=41;s=MyMachine",
 		"ns=42;s=MyMachine"
 	],
-	"Machines": {
-		"ShowcaseMachineTool": {
+	"Machines": [
+		{
 			"NodeId": "ns=22;i=58192",
-			"BrowseName": {
-				"namespaceIndex": 22,
-				"name": "ShowcaseMachineTool"
+			"Attributes": {
+				"DisplayName": "ShowcaseMachineTool",
+				"BrowseName": "22:ShowcaseMachineTool",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "ShowcaseMachineTool"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Machining centre (other)",
 				"Location": "Virtual 1 1/N 49.871215 E 8.654204",
-				"Manufacturer": "locale=en text=umati Showcase",
-				"Model": "locale=en text=ShowCaseMachineTool-node-opcua",
+				"Manufacturer": {
+					"locale": "en",
+					"text": "umati Showcase"
+				},
+				"Model": {
+					"locale": "en",
+					"text": "ShowCaseMachineTool-node-opcua"
+				},
 				"ProductCode": "2653837gg1548",
 				"ProductInstanceUri": "https://umati.org/UA/instance/ShowCaseMachineTool-20240301-4711",
 				"SerialNumber": "20240301-4711",
 				"SoftwareRevision": "v2.01.1",
-				"YearOfConstruction": "2024"
+				"YearOfConstruction": 2024
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			}
 		},
-		"SampleMachineTool": {
+		{
 			"NodeId": "ns=23;i=5002",
-			"BrowseName": {
-				"namespaceIndex": 23,
-				"name": "SampleMachineTool"
+			"Attributes": {
+				"DisplayName": "SampleMachineTool",
+				"BrowseName": "23:SampleMachineTool",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "SampleMachineTool"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Machining centre (other)",
 				"Location": "N 50.082694 E 8.626230",
-				"Manufacturer": "locale=en text=VDW e.V.",
-				"Model": "locale=null text=Sample Machine Tool",
+				"Manufacturer": {
+					"locale": "en",
+					"text": "VDW e.V."
+				},
+				"Model": {
+					"text": "Sample Machine Tool"
+				},
 				"ProductCode": "Machine Tool",
 				"ProductInstanceUri": "http://vdw.de/SampleMachineTool#123456",
 				"SerialNumber": "123456",
 				"SoftwareRevision": "1.01.1",
-				"YearOfConstruction": "2022"
+				"YearOfConstruction": 2022
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			}
 		},
-		"SampleMachineTool_v101": {
+		{
 			"NodeId": "ns=23;i=5015",
-			"BrowseName": {
-				"namespaceIndex": 23,
-				"name": "SampleMachineTool_v101"
+			"Attributes": {
+				"DisplayName": "SampleMachineTool_v101",
+				"BrowseName": "23:SampleMachineTool_v101",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "SampleMachineTool_v101"
-			},
-			"Description": {},
 			"Identification": {
-				"Manufacturer": "locale=null text=null",
+				"Manufacturer": {},
 				"ProductInstanceUri": "",
 				"SerialNumber": ""
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			}
 		},
-		"MotionDeviceSystem": {
+		{
 			"NodeId": "ns=24;i=5015",
-			"BrowseName": {
-				"namespaceIndex": 24,
-				"name": "MotionDeviceSystem"
+			"Attributes": {
+				"DisplayName": "MotionDeviceSystem",
+				"BrowseName": "24:MotionDeviceSystem",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "MotionDeviceSystem"
-			},
-			"Description": {},
 			"Identification": {
-				"ComponentName": "locale=null text=Umati_Sample_MDS",
+				"ComponentName": {
+					"text": "Umati_Sample_MDS"
+				},
 				"Location": "N 50.0823924 E 8.6257018",
-				"Manufacturer": "locale=null text=Sample_MDS_Manufacturer",
+				"Manufacturer": {
+					"text": "Sample_MDS_Manufacturer"
+				},
 				"ProductInstanceUri": "http://mds_sample_instance_piu",
 				"SerialNumber": "SampleMDS_SN_40010"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MotionDeviceSystemType"
+			}
 		},
-		"RobotController": {
+		{
 			"NodeId": "ns=24;i=5002",
-			"BrowseName": {
-				"namespaceIndex": 24,
-				"name": "RobotController"
+			"Attributes": {
+				"DisplayName": "RobotController",
+				"BrowseName": "24:RobotController",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "RobotController"
-			},
-			"Description": {},
 			"Identification": {
 				"AssetId": "VDMA RobotController 01",
 				"Location": "N 50.0823924 E 8.6257018",
-				"Manufacturer": "locale=en-US text=RobotControllerManufacturer",
+				"Manufacturer": {
+					"locale": "en-US",
+					"text": "RobotControllerManufacturer"
+				},
 				"ManufacturerUri": "VDMA Robotics",
-				"Model": "locale=en-US text=RobotControllerModel",
+				"Model": {
+					"locale": "en-US",
+					"text": "RobotControllerModel"
+				},
 				"ProductCode": "RobotControllerProductCode",
 				"ProductInstanceUri": "TestProductInstanceUri",
 				"SerialNumber": "RobotControllerSerialNumber"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "ControllerType"
+			}
 		},
-		"Robot": {
+		{
 			"NodeId": "ns=24;i=5018",
-			"BrowseName": {
-				"namespaceIndex": 24,
-				"name": "Robot"
+			"Attributes": {
+				"DisplayName": "Robot",
+				"BrowseName": "24:Robot",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "Robot"
-			},
-			"Description": {},
 			"Identification": {
 				"AssetId": "VDMA Robot 01",
-				"ComponentName": "locale=null text=VDMA Robot",
+				"ComponentName": {
+					"text": "VDMA Robot"
+				},
 				"Location": "N 50.0823924 E 8.6257018",
-				"Manufacturer": "locale=en-US text=TestMotionDeviceManufacturer",
+				"Manufacturer": {
+					"locale": "en-US",
+					"text": "TestMotionDeviceManufacturer"
+				},
 				"ManufacturerUri": "VDMA",
-				"Model": "locale=en-US text=TestMotionDeviceModel",
+				"Model": {
+					"locale": "en-US",
+					"text": "TestMotionDeviceModel"
+				},
 				"ProductCode": "TestMotionDeviceProductCode",
 				"ProductInstanceUri": "TestMotionDeviceProductInstanceUri",
 				"SerialNumber": "TestMotionDeviceSerialNumber"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MotionDeviceType"
+			}
 		},
-		"GenericUmatiMachine": {
+		{
 			"NodeId": "ns=25;i=5044",
-			"BrowseName": {
-				"namespaceIndex": 25,
-				"name": "GenericUmatiMachine"
+			"Attributes": {
+				"DisplayName": "GenericUmatiMachine",
+				"BrowseName": "25:GenericUmatiMachine",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "GenericUmatiMachine"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Blow moulding machine",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=Machine Model 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "Machine Model 3000"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/BM123",
 				"SerialNumber": "BM123"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "UmatiPlasticsRubberGenericType"
+			}
 		},
-		"IMM_SampleManufacturer_12345": {
+		{
 			"NodeId": "ns=26;i=5002",
-			"BrowseName": {
-				"namespaceIndex": 26,
-				"name": "IMM_SampleManufacturer_12345"
+			"Attributes": {
+				"DisplayName": "IMM_SampleManufacturer_12345",
+				"BrowseName": "26:IMM_SampleManufacturer_12345",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "IMM_SampleManufacturer_12345"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Injection Moulding Machine",
 				"Location": "K 14 F42/VIRTUAL 0 0/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample manufacturer",
-				"Model": "locale=null text=Machine Model 3000",
+				"Manufacturer": {
+					"text": "Sample manufacturer"
+				},
+				"Model": {
+					"text": "Machine Model 3000"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/IMM123",
 				"SerialNumber": "IMM123"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "IMM_MES_InterfaceType"
+			}
 		},
-		"SampleImmRobotCell": {
+		{
 			"NodeId": "ns=27;i=5004",
-			"BrowseName": {
-				"namespaceIndex": 27,
-				"name": "SampleImmRobotCell"
+			"Attributes": {
+				"DisplayName": "SampleImmRobotCell",
+				"BrowseName": "27:SampleImmRobotCell",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "SampleImmRobotCell"
-			},
-			"Description": {},
 			"Identification": {
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample IMM Manufacturer / Sample Robot Manufacturer",
-				"Model": "locale=null text=Machine Model 3000 / Robot 99",
+				"Manufacturer": {
+					"text": "Sample IMM Manufacturer / Sample Robot Manufacturer"
+				},
+				"Model": {
+					"text": "Machine Model 3000 / Robot 99"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/Cell123",
 				"SerialNumber": "Cell123"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "ImmRobotCellType"
+			}
 		},
-		"Extruder_SampleManufacturer_987": {
+		{
 			"NodeId": "ns=28;i=5002",
-			"BrowseName": {
-				"namespaceIndex": 28,
-				"name": "Extruder_SampleManufacturer_987"
+			"Attributes": {
+				"DisplayName": "Extruder_SampleManufacturer_987",
+				"BrowseName": "28:Extruder_SampleManufacturer_987",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "Extruder_SampleManufacturer_987"
-			},
-			"Description": {},
 			"Identification": {
 				"ControllerName": "My Controller",
 				"DeviceClass": "Extruder",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=Extruder 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "Extruder 3000"
+				},
 				"ProductInstanceUri": "https://samplemanufacturer.com/Extruder987",
 				"SerialNumber": "987"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "Extruder_InterfaceType"
+			}
 		},
-		"TCD_SampleManufacturer_1234": {
+		{
 			"NodeId": "ns=29;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 29,
-				"name": "TCD_SampleManufacturer_1234"
+			"Attributes": {
+				"DisplayName": "TCD_SampleManufacturer_1234",
+				"BrowseName": "29:TCD_SampleManufacturer_1234",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "TCD_SampleManufacturer_1234"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Temperature Control Device",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample manufacturer",
-				"Model": "locale=null text=TCD 3000",
+				"Manufacturer": {
+					"text": "Sample manufacturer"
+				},
+				"Model": {
+					"text": "TCD 3000"
+				},
 				"ProductInstanceUri": "https://samplemanufacturer.com/TCD1234",
 				"SerialNumber": "1234"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "TCD_InterfaceType"
+			}
 		},
-		"HRD_SampleManufacturer_1234": {
+		{
 			"NodeId": "ns=30;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 30,
-				"name": "HRD_SampleManufacturer_1234"
+			"Attributes": {
+				"DisplayName": "HRD_SampleManufacturer_1234",
+				"BrowseName": "30:HRD_SampleManufacturer_1234",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "HRD_SampleManufacturer_1234"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Hot Runner Device",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=HRD 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "HRD 3000"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_OPC40082-2_instance/",
 				"SerialNumber": "1234"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "HRD_InterfaceType"
+			}
 		},
-		"LDS_samplemanufacturer_1234": {
+		{
 			"NodeId": "ns=31;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 31,
-				"name": "LDS_samplemanufacturer_1234"
+			"Attributes": {
+				"DisplayName": "LDS_samplemanufacturer_1234",
+				"BrowseName": "31:LDS_samplemanufacturer_1234",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "LDS_samplemanufacturer_1234"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "LSR Dosing System",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=LDS 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "LDS 3000"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_LDS_instance/",
 				"SerialNumber": "1234"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "LDS_InterfaceType"
+			}
 		},
-		"Cutter_SampleManufacturer_1234": {
+		{
 			"NodeId": "ns=32;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 32,
-				"name": "Cutter_SampleManufacturer_1234"
+			"Attributes": {
+				"DisplayName": "Cutter_SampleManufacturer_1234",
+				"BrowseName": "32:Cutter_SampleManufacturer_1234",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "Cutter_SampleManufacturer_1234"
-			},
-			"Description": {},
 			"Identification": {
 				"ControllerName": "My Controller",
 				"DeviceClass": "Cutter",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=Cutter 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "Cutter 3000"
+				},
 				"ProductInstanceUri": "https://samplemanufacturer.com/Cutter1234",
 				"SerialNumber": "1234"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "Cutter_InterfaceType"
+			}
 		},
-		"Corrugator_SampleManufacturer_1234": {
+		{
 			"NodeId": "ns=33;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 33,
-				"name": "Corrugator_SampleManufacturer_1234"
+			"Attributes": {
+				"DisplayName": "Corrugator_SampleManufacturer_1234",
+				"BrowseName": "33:Corrugator_SampleManufacturer_1234",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "Corrugator_SampleManufacturer_1234"
-			},
-			"Description": {},
 			"Identification": {
 				"ControllerName": "My Controller",
 				"DeviceClass": "Corrugator",
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
-				"Manufacturer": "locale=null text=Sample Manufacturer",
-				"Model": "locale=null text=Corrugator 3000",
+				"Manufacturer": {
+					"text": "Sample Manufacturer"
+				},
+				"Model": {
+					"text": "Corrugator 3000"
+				},
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_corrugator_instance/",
 				"SerialNumber": "1234"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "Corrugator_InterfaceType"
+			}
 		},
-		"BasicWoodworking": {
+		{
 			"NodeId": "ns=34;i=5002",
-			"BrowseName": {
-				"namespaceIndex": 34,
-				"name": "BasicWoodworking"
+			"Attributes": {
+				"DisplayName": "BasicWoodworking",
+				"BrowseName": "34:BasicWoodworking",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "BasicWoodworking"
-			},
-			"Description": {},
 			"Identification": {
 				"DeviceClass": "Class A12",
-				"Manufacturer": "locale=null text=null",
-				"Model": "locale=null text=null",
+				"Manufacturer": {},
+				"Model": {},
 				"ProductInstanceUri": "https://www.example.com",
 				"SerialNumber": "378485745354392",
-				"YearOfConstruction": "2023"
+				"YearOfConstruction": 2023
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "WwMachineType"
+			}
 		},
-		"FullWoodworking": {
+		{
 			"NodeId": "ns=34;i=5008",
-			"BrowseName": {
-				"namespaceIndex": 34,
-				"name": "FullWoodworking"
+			"Attributes": {
+				"DisplayName": "FullWoodworking",
+				"BrowseName": "34:FullWoodworking",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "FullWoodworking"
-			},
-			"Description": {},
 			"Identification": {
 				"AssetId": "12",
-				"ComponentName": "locale=null text=null",
-				"CustomerCompanyName": "locale=null text=null",
+				"ComponentName": {},
+				"CustomerCompanyName": {},
 				"DeviceClass": "Class A12",
 				"HardwareRevision": "V. 4.6",
-				"InitialOperationDate": "Mon Jan 01 1601 00:53:28 GMT+0053 (Mitteleuropäische Normalzeit)",
+				"InitialOperationDate": "1601-01-01T00:00:00.000Z",
 				"Location": "Darmstadt",
 				"LocationGPS": "S33�51'25.07\", E151�12'54.57\"",
 				"LocationPlant": "Darmstadt",
-				"Manufacturer": "locale=null text=null",
+				"Manufacturer": {},
 				"ManufacturerUri": "https://www.basyskom.com",
-				"Model": "locale=null text=null",
-				"MonthOfConstruction": "0",
+				"Model": {},
+				"MonthOfConstruction": 0,
 				"ProductCode": "WW0636C48H3261",
 				"ProductInstanceUri": "https://www.example.com",
 				"SerialNumber": "378485745354392",
 				"SoftwareRevision": "2.6.23",
-				"YearOfConstruction": "2023"
+				"YearOfConstruction": 2023
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "WwMachineType"
+			}
 		},
-		"MachineTool_brownfield": {
+		{
 			"NodeId": "ns=39;i=5004",
-			"BrowseName": {
-				"namespaceIndex": 39,
-				"name": "MachineTool_brownfield"
+			"Attributes": {
+				"DisplayName": "MachineTool_brownfield",
+				"BrowseName": "39:MachineTool_brownfield",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "MachineTool_brownfield"
-			},
-			"Description": {},
 			"Identification": {
-				"Manufacturer": "locale=en text=umati",
+				"Manufacturer": {
+					"locale": "en",
+					"text": "umati"
+				},
 				"ProductInstanceUri": "http://umati.org/brownfield/0815",
 				"SerialNumber": "0815"
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			}
 		},
-		"LaserSystem-Example": {
+		{
 			"NodeId": "ns=40;i=5003",
-			"BrowseName": {
-				"namespaceIndex": 40,
-				"name": "LaserSystem-Example"
+			"Attributes": {
+				"DisplayName": "LaserSystem-Example",
+				"BrowseName": "40:LaserSystem-Example",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "LaserSystem-Example"
-			},
-			"Description": {},
 			"Identification": {
 				"Location": "EMO 9 F24",
-				"Manufacturer": "locale=en text=VDMA e.V.",
-				"Model": "locale=en text=Sample Laser System",
+				"Manufacturer": {
+					"locale": "en",
+					"text": "VDMA e.V."
+				},
+				"Model": {
+					"locale": "en",
+					"text": "Sample Laser System"
+				},
 				"ProductInstanceUri": "http://vdma.org/UA/LaserSystem-Example/0815-4711",
 				"SerialNumber": "0815-4711",
-				"YearOfConstruction": "2023"
+				"YearOfConstruction": 2023
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "LaserSystemType"
+			}
 		},
-		"MÄGERLE 0200018447 UGG0001": {
+		{
 			"NodeId": "ns=41;s=MyMachine",
-			"BrowseName": {
-				"namespaceIndex": 41,
-				"name": "MÄGERLE 0200018447 UGG0001"
-			},
-			"DisplayName": {
-				"text": "MÄGERLE 0200018447 UGG0001"
-			},
-			"Description": {
-				"text": "Main entry point of 'umati' model."
+			"Attributes": {
+				"DisplayName": "MÄGERLE 0200018447 UGG0001",
+				"BrowseName": "41:MÄGERLE 0200018447 UGG0001",
+				"Description": "Main entry point of 'umati' model."
 			},
 			"Identification": {
 				"AssetId": "9900-0001",
-				"ComponentName": "locale=en-en text=Test machine",
+				"ComponentName": {
+					"locale": "en-en",
+					"text": "Test machine"
+				},
 				"DeviceClass": "Grinding machine",
 				"HardwareRevision": "Release",
-				"InitialOperationDate": "Mon Jan 01 1601 00:53:28 GMT+0053 (Mitteleuropäische Normalzeit)",
+				"InitialOperationDate": "1601-01-01T00:00:00.000Z",
 				"Location": "GRIND 9 C51/UGG Digital Lab Bern, CH/N46.56528, E26.506400",
-				"Manufacturer": "locale=de-de text=MÄGERLE",
+				"Manufacturer": {
+					"locale": "de-de",
+					"text": "MÄGERLE"
+				},
 				"ManufacturerUri": "https://www.maegerle.com/",
-				"Model": "locale=en-en text=MFP-30",
-				"MonthOfConstruction": "11",
+				"Model": {
+					"locale": "en-en",
+					"text": "MFP-30"
+				},
+				"MonthOfConstruction": 11,
 				"ProductCode": "0200018447",
 				"ProductInstanceUri": "https://www.maegerle.com/en/grinding-machines/detailed-view/product/mfp-30/",
 				"SerialNumber": "UGG0001",
 				"SoftwareRevision": "3.17.80",
-				"YearOfConstruction": "2022"
+				"YearOfConstruction": 2022
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			}
 		},
-		"MyMachine": {
+		{
 			"NodeId": "ns=42;s=MyMachine",
-			"BrowseName": {
-				"namespaceIndex": 42,
-				"name": "MyMachine"
+			"Attributes": {
+				"DisplayName": "MyMachine",
+				"BrowseName": "42:MyMachine",
+				"Description": null
 			},
-			"DisplayName": {
-				"text": "MyMachine"
-			},
-			"Description": {},
 			"Identification": {
 				"ProductInstanceUri": "",
-				"Manufacturer": "locale=null text=Andreas Heine",
-				"Model": "locale=null text=null",
+				"Manufacturer": {
+					"text": "Andreas Heine"
+				},
+				"Model": {},
 				"SerialNumber": ""
 			},
-			"OperationalMode": null,
-			"ItemState": null,
-			"Monitoring": null
+			"References": {
+				"TypeDefinition": "BaseObjectType"
+			}
 		}
-	}
+	]
 }
