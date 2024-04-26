@@ -3,6 +3,7 @@ import {
     BrowseDescriptionLike, 
     BrowseDirection, 
     ClientSession, 
+    DataTypeIds, 
     DataValue, 
     LocalizedText, 
     QualifiedName, 
@@ -26,7 +27,6 @@ export class UaMachineryMachine {
     }
 
     async initialize() {
-        console.log(`Exploring MachineInstance: ${this.nodeId}`)
         const readResults: DataValue[] = await this.session!.read([
             {
                 nodeId: this.nodeId,
@@ -143,7 +143,16 @@ export class UaMachineryMachine {
                                 } as ReadValueIdOptions,
                             ])
                             if (readResults[0].statusCode.value === StatusCodes.Good.value) {
-                                this.identification.set(`${(readResults[1].value.value as LocalizedText).text}`, readResults[0].value.value)
+                                let value
+                                switch (readResults[0].value.dataType.valueOf()) {
+                                    case DataTypeIds.LocalizedText.valueOf():
+                                        value = (readResults[0].value.value as LocalizedText).text
+                                        break;
+                                    default:
+                                        value = readResults[0].value.value
+                                        break;
+                                }
+                                this.identification.set(`${(readResults[1].value.value as LocalizedText).text}`, value)
                             }
                         }
                     }
