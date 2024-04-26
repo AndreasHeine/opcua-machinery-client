@@ -92,7 +92,17 @@
 				"text": "ShowcaseMachineTool"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Machining centre (other)",
+				"Location": "Virtual 1 1/N 49.871215 E 8.654204",
+				"Manufacturer": "locale=en text=umati Showcase",
+				"Model": "locale=en text=ShowCaseMachineTool-node-opcua",
+				"ProductCode": "2653837gg1548",
+				"ProductInstanceUri": "https://umati.org/UA/instance/ShowCaseMachineTool-20240301-4711",
+				"SerialNumber": "20240301-4711",
+				"SoftwareRevision": "v2.01.1",
+				"YearOfConstruction": "2024"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -107,7 +117,17 @@
 				"text": "SampleMachineTool"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Machining centre (other)",
+				"Location": "N 50.082694 E 8.626230",
+				"Manufacturer": "locale=en text=VDW e.V.",
+				"Model": "locale=null text=Sample Machine Tool",
+				"ProductCode": "Machine Tool",
+				"ProductInstanceUri": "http://vdw.de/SampleMachineTool#123456",
+				"SerialNumber": "123456",
+				"SoftwareRevision": "1.01.1",
+				"YearOfConstruction": "2022"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -122,7 +142,11 @@
 				"text": "SampleMachineTool_v101"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"Manufacturer": "locale=null text=null",
+				"ProductInstanceUri": "",
+				"SerialNumber": ""
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -137,7 +161,13 @@
 				"text": "MotionDeviceSystem"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"ComponentName": "locale=null text=Umati_Sample_MDS",
+				"Location": "N 50.0823924 E 8.6257018",
+				"Manufacturer": "locale=null text=Sample_MDS_Manufacturer",
+				"ProductInstanceUri": "http://mds_sample_instance_piu",
+				"SerialNumber": "SampleMDS_SN_40010"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -152,7 +182,16 @@
 				"text": "RobotController"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"AssetId": "VDMA RobotController 01",
+				"Location": "N 50.0823924 E 8.6257018",
+				"Manufacturer": "locale=en-US text=RobotControllerManufacturer",
+				"ManufacturerUri": "VDMA Robotics",
+				"Model": "locale=en-US text=RobotControllerModel",
+				"ProductCode": "RobotControllerProductCode",
+				"ProductInstanceUri": "TestProductInstanceUri",
+				"SerialNumber": "RobotControllerSerialNumber"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -167,7 +206,17 @@
 				"text": "Robot"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"AssetId": "VDMA Robot 01",
+				"ComponentName": "locale=null text=VDMA Robot",
+				"Location": "N 50.0823924 E 8.6257018",
+				"Manufacturer": "locale=en-US text=TestMotionDeviceManufacturer",
+				"ManufacturerUri": "VDMA",
+				"Model": "locale=en-US text=TestMotionDeviceModel",
+				"ProductCode": "TestMotionDeviceProductCode",
+				"ProductInstanceUri": "TestMotionDeviceProductInstanceUri",
+				"SerialNumber": "TestMotionDeviceSerialNumber"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -182,7 +231,14 @@
 				"text": "GenericUmatiMachine"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Blow moulding machine",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=Machine Model 3000",
+				"ProductInstanceUri": "http://samplemanufacturer.com/BM123",
+				"SerialNumber": "BM123"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -197,7 +253,14 @@
 				"text": "IMM_SampleManufacturer_12345"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Injection Moulding Machine",
+				"Location": "K 14 F42/VIRTUAL 0 0/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample manufacturer",
+				"Model": "locale=null text=Machine Model 3000",
+				"ProductInstanceUri": "http://samplemanufacturer.com/IMM123",
+				"SerialNumber": "IMM123"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -212,7 +275,13 @@
 				"text": "SampleImmRobotCell"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample IMM Manufacturer / Sample Robot Manufacturer",
+				"Model": "locale=null text=Machine Model 3000 / Robot 99",
+				"ProductInstanceUri": "http://samplemanufacturer.com/Cell123",
+				"SerialNumber": "Cell123"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -227,7 +296,15 @@
 				"text": "Extruder_SampleManufacturer_987"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"ControllerName": "My Controller",
+				"DeviceClass": "Extruder",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=Extruder 3000",
+				"ProductInstanceUri": "https://samplemanufacturer.com/Extruder987",
+				"SerialNumber": "987"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -242,7 +319,14 @@
 				"text": "TCD_SampleManufacturer_1234"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Temperature Control Device",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample manufacturer",
+				"Model": "locale=null text=TCD 3000",
+				"ProductInstanceUri": "https://samplemanufacturer.com/TCD1234",
+				"SerialNumber": "1234"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -257,7 +341,14 @@
 				"text": "HRD_SampleManufacturer_1234"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Hot Runner Device",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=HRD 3000",
+				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_OPC40082-2_instance/",
+				"SerialNumber": "1234"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -272,7 +363,14 @@
 				"text": "LDS_samplemanufacturer_1234"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "LSR Dosing System",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=LDS 3000",
+				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_LDS_instance/",
+				"SerialNumber": "1234"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -287,7 +385,15 @@
 				"text": "Cutter_SampleManufacturer_1234"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"ControllerName": "My Controller",
+				"DeviceClass": "Cutter",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=Cutter 3000",
+				"ProductInstanceUri": "https://samplemanufacturer.com/Cutter1234",
+				"SerialNumber": "1234"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -302,7 +408,15 @@
 				"text": "Corrugator_SampleManufacturer_1234"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"ControllerName": "My Controller",
+				"DeviceClass": "Corrugator",
+				"Location": "K 14 F42/N 51.260407 E 6.744588",
+				"Manufacturer": "locale=null text=Sample Manufacturer",
+				"Model": "locale=null text=Corrugator 3000",
+				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_corrugator_instance/",
+				"SerialNumber": "1234"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -317,7 +431,14 @@
 				"text": "BasicWoodworking"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"DeviceClass": "Class A12",
+				"Manufacturer": "locale=null text=null",
+				"Model": "locale=null text=null",
+				"ProductInstanceUri": "https://www.example.com",
+				"SerialNumber": "378485745354392",
+				"YearOfConstruction": "2023"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -332,7 +453,26 @@
 				"text": "FullWoodworking"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"AssetId": "12",
+				"ComponentName": "locale=null text=null",
+				"CustomerCompanyName": "locale=null text=null",
+				"DeviceClass": "Class A12",
+				"HardwareRevision": "V. 4.6",
+				"InitialOperationDate": "Mon Jan 01 1601 00:53:28 GMT+0053 (Mitteleuropäische Normalzeit)",
+				"Location": "Darmstadt",
+				"LocationGPS": "S33�51'25.07\", E151�12'54.57\"",
+				"LocationPlant": "Darmstadt",
+				"Manufacturer": "locale=null text=null",
+				"ManufacturerUri": "https://www.basyskom.com",
+				"Model": "locale=null text=null",
+				"MonthOfConstruction": "0",
+				"ProductCode": "WW0636C48H3261",
+				"ProductInstanceUri": "https://www.example.com",
+				"SerialNumber": "378485745354392",
+				"SoftwareRevision": "2.6.23",
+				"YearOfConstruction": "2023"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -347,7 +487,11 @@
 				"text": "MachineTool_brownfield"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"Manufacturer": "locale=en text=umati",
+				"ProductInstanceUri": "http://umati.org/brownfield/0815",
+				"SerialNumber": "0815"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -362,7 +506,14 @@
 				"text": "LaserSystem-Example"
 			},
 			"Description": {},
-			"Identification": {},
+			"Identification": {
+				"Location": "EMO 9 F24",
+				"Manufacturer": "locale=en text=VDMA e.V.",
+				"Model": "locale=en text=Sample Laser System",
+				"ProductInstanceUri": "http://vdma.org/UA/LaserSystem-Example/0815-4711",
+				"SerialNumber": "0815-4711",
+				"YearOfConstruction": "2023"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
@@ -379,7 +530,23 @@
 			"Description": {
 				"text": "Main entry point of 'umati' model."
 			},
-			"Identification": {},
+			"Identification": {
+				"AssetId": "9900-0001",
+				"ComponentName": "locale=en-en text=Test machine",
+				"DeviceClass": "Grinding machine",
+				"HardwareRevision": "Release",
+				"InitialOperationDate": "Mon Jan 01 1601 00:53:28 GMT+0053 (Mitteleuropäische Normalzeit)",
+				"Location": "GRIND 9 C51/UGG Digital Lab Bern, CH/N46.56528, E26.506400",
+				"Manufacturer": "locale=de-de text=MÄGERLE",
+				"ManufacturerUri": "https://www.maegerle.com/",
+				"Model": "locale=en-en text=MFP-30",
+				"MonthOfConstruction": "11",
+				"ProductCode": "0200018447",
+				"ProductInstanceUri": "https://www.maegerle.com/en/grinding-machines/detailed-view/product/mfp-30/",
+				"SerialNumber": "UGG0001",
+				"SoftwareRevision": "3.17.80",
+				"YearOfConstruction": "2022"
+			},
 			"OperationalMode": null,
 			"ItemState": null,
 			"Monitoring": null
