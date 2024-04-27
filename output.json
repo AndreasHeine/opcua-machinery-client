@@ -100,6 +100,9 @@
 				"BrowseName": "22:ShowcaseMachineTool",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			},
 			"Identification": {
 				"DeviceClass": "Machining centre (other)",
 				"Location": "Virtual 1 1/N 49.871215 E 8.654204",
@@ -111,9 +114,10 @@
 				"SoftwareRevision": "v2.01.1",
 				"YearOfConstruction": 2024
 			},
-			"References": {
-				"TypeDefinition": "MachineToolType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=23;i=5002",
@@ -121,6 +125,9 @@
 				"DisplayName": "SampleMachineTool",
 				"BrowseName": "23:SampleMachineTool",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "MachineToolType"
 			},
 			"Identification": {
 				"DeviceClass": "Machining centre (other)",
@@ -133,9 +140,10 @@
 				"SoftwareRevision": "1.01.1",
 				"YearOfConstruction": 2022
 			},
-			"References": {
-				"TypeDefinition": "MachineToolType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=23;i=5015",
@@ -144,14 +152,18 @@
 				"BrowseName": "23:SampleMachineTool_v101",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			},
 			"Identification": {
 				"Manufacturer": null,
 				"ProductInstanceUri": "",
 				"SerialNumber": ""
 			},
-			"References": {
-				"TypeDefinition": "MachineToolType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=24;i=5015",
@@ -160,6 +172,9 @@
 				"BrowseName": "24:MotionDeviceSystem",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "MotionDeviceSystemType"
+			},
 			"Identification": {
 				"ComponentName": "Umati_Sample_MDS",
 				"Location": "N 50.0823924 E 8.6257018",
@@ -167,9 +182,10 @@
 				"ProductInstanceUri": "http://mds_sample_instance_piu",
 				"SerialNumber": "SampleMDS_SN_40010"
 			},
-			"References": {
-				"TypeDefinition": "MotionDeviceSystemType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=24;i=5002",
@@ -177,6 +193,9 @@
 				"DisplayName": "RobotController",
 				"BrowseName": "24:RobotController",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "ControllerType"
 			},
 			"Identification": {
 				"AssetId": "VDMA RobotController 01",
@@ -188,9 +207,10 @@
 				"ProductInstanceUri": "TestProductInstanceUri",
 				"SerialNumber": "RobotControllerSerialNumber"
 			},
-			"References": {
-				"TypeDefinition": "ControllerType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=24;i=5018",
@@ -198,6 +218,9 @@
 				"DisplayName": "Robot",
 				"BrowseName": "24:Robot",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "MotionDeviceType"
 			},
 			"Identification": {
 				"AssetId": "VDMA Robot 01",
@@ -210,9 +233,10 @@
 				"ProductInstanceUri": "TestMotionDeviceProductInstanceUri",
 				"SerialNumber": "TestMotionDeviceSerialNumber"
 			},
-			"References": {
-				"TypeDefinition": "MotionDeviceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=25;i=5044",
@@ -220,6 +244,9 @@
 				"DisplayName": "GenericUmatiMachine",
 				"BrowseName": "25:GenericUmatiMachine",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "UmatiPlasticsRubberGenericType"
 			},
 			"Identification": {
 				"DeviceClass": "Blow moulding machine",
@@ -229,9 +256,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/BM123",
 				"SerialNumber": "BM123"
 			},
-			"References": {
-				"TypeDefinition": "UmatiPlasticsRubberGenericType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=26;i=5002",
@@ -239,6 +267,9 @@
 				"DisplayName": "IMM_SampleManufacturer_12345",
 				"BrowseName": "26:IMM_SampleManufacturer_12345",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "IMM_MES_InterfaceType"
 			},
 			"Identification": {
 				"DeviceClass": "Injection Moulding Machine",
@@ -248,9 +279,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/IMM123",
 				"SerialNumber": "IMM123"
 			},
-			"References": {
-				"TypeDefinition": "IMM_MES_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=27;i=5004",
@@ -259,6 +291,9 @@
 				"BrowseName": "27:SampleImmRobotCell",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "ImmRobotCellType"
+			},
 			"Identification": {
 				"Location": "K 14 F42/N 51.260407 E 6.744588",
 				"Manufacturer": "Sample IMM Manufacturer / Sample Robot Manufacturer",
@@ -266,9 +301,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/Cell123",
 				"SerialNumber": "Cell123"
 			},
-			"References": {
-				"TypeDefinition": "ImmRobotCellType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=28;i=5002",
@@ -276,6 +312,9 @@
 				"DisplayName": "Extruder_SampleManufacturer_987",
 				"BrowseName": "28:Extruder_SampleManufacturer_987",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "Extruder_InterfaceType"
 			},
 			"Identification": {
 				"ControllerName": "My Controller",
@@ -286,9 +325,10 @@
 				"ProductInstanceUri": "https://samplemanufacturer.com/Extruder987",
 				"SerialNumber": "987"
 			},
-			"References": {
-				"TypeDefinition": "Extruder_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=29;i=5003",
@@ -296,6 +336,9 @@
 				"DisplayName": "TCD_SampleManufacturer_1234",
 				"BrowseName": "29:TCD_SampleManufacturer_1234",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "TCD_InterfaceType"
 			},
 			"Identification": {
 				"DeviceClass": "Temperature Control Device",
@@ -305,9 +348,10 @@
 				"ProductInstanceUri": "https://samplemanufacturer.com/TCD1234",
 				"SerialNumber": "1234"
 			},
-			"References": {
-				"TypeDefinition": "TCD_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=30;i=5003",
@@ -315,6 +359,9 @@
 				"DisplayName": "HRD_SampleManufacturer_1234",
 				"BrowseName": "30:HRD_SampleManufacturer_1234",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "HRD_InterfaceType"
 			},
 			"Identification": {
 				"DeviceClass": "Hot Runner Device",
@@ -324,9 +371,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_OPC40082-2_instance/",
 				"SerialNumber": "1234"
 			},
-			"References": {
-				"TypeDefinition": "HRD_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=31;i=5003",
@@ -334,6 +382,9 @@
 				"DisplayName": "LDS_samplemanufacturer_1234",
 				"BrowseName": "31:LDS_samplemanufacturer_1234",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "LDS_InterfaceType"
 			},
 			"Identification": {
 				"DeviceClass": "LSR Dosing System",
@@ -343,9 +394,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_LDS_instance/",
 				"SerialNumber": "1234"
 			},
-			"References": {
-				"TypeDefinition": "LDS_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=32;i=5003",
@@ -353,6 +405,9 @@
 				"DisplayName": "Cutter_SampleManufacturer_1234",
 				"BrowseName": "32:Cutter_SampleManufacturer_1234",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "Cutter_InterfaceType"
 			},
 			"Identification": {
 				"ControllerName": "My Controller",
@@ -363,9 +418,10 @@
 				"ProductInstanceUri": "https://samplemanufacturer.com/Cutter1234",
 				"SerialNumber": "1234"
 			},
-			"References": {
-				"TypeDefinition": "Cutter_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=33;i=5003",
@@ -373,6 +429,9 @@
 				"DisplayName": "Corrugator_SampleManufacturer_1234",
 				"BrowseName": "33:Corrugator_SampleManufacturer_1234",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "Corrugator_InterfaceType"
 			},
 			"Identification": {
 				"ControllerName": "My Controller",
@@ -383,9 +442,10 @@
 				"ProductInstanceUri": "http://samplemanufacturer.com/umati_sample_corrugator_instance/",
 				"SerialNumber": "1234"
 			},
-			"References": {
-				"TypeDefinition": "Corrugator_InterfaceType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=34;i=5002",
@@ -393,6 +453,9 @@
 				"DisplayName": "BasicWoodworking",
 				"BrowseName": "34:BasicWoodworking",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "WwMachineType"
 			},
 			"Identification": {
 				"DeviceClass": "Class A12",
@@ -402,9 +465,10 @@
 				"SerialNumber": "378485745354392",
 				"YearOfConstruction": 2023
 			},
-			"References": {
-				"TypeDefinition": "WwMachineType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=34;i=5008",
@@ -412,6 +476,9 @@
 				"DisplayName": "FullWoodworking",
 				"BrowseName": "34:FullWoodworking",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "WwMachineType"
 			},
 			"Identification": {
 				"AssetId": "12",
@@ -433,9 +500,10 @@
 				"SoftwareRevision": "2.6.23",
 				"YearOfConstruction": 2023
 			},
-			"References": {
-				"TypeDefinition": "WwMachineType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=39;i=5004",
@@ -444,14 +512,18 @@
 				"BrowseName": "39:MachineTool_brownfield",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "MachineToolType"
+			},
 			"Identification": {
 				"Manufacturer": "umati",
 				"ProductInstanceUri": "http://umati.org/brownfield/0815",
 				"SerialNumber": "0815"
 			},
-			"References": {
-				"TypeDefinition": "MachineToolType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=40;i=5003",
@@ -459,6 +531,9 @@
 				"DisplayName": "LaserSystem-Example",
 				"BrowseName": "40:LaserSystem-Example",
 				"Description": null
+			},
+			"References": {
+				"TypeDefinition": "LaserSystemType"
 			},
 			"Identification": {
 				"Location": "EMO 9 F24",
@@ -468,9 +543,10 @@
 				"SerialNumber": "0815-4711",
 				"YearOfConstruction": 2023
 			},
-			"References": {
-				"TypeDefinition": "LaserSystemType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=41;s=MyMachine",
@@ -478,6 +554,9 @@
 				"DisplayName": "MÄGERLE 0200018447 UGG0001",
 				"BrowseName": "41:MÄGERLE 0200018447 UGG0001",
 				"Description": "Main entry point of 'umati' model."
+			},
+			"References": {
+				"TypeDefinition": "MachineToolType"
 			},
 			"Identification": {
 				"AssetId": "9900-0001",
@@ -496,9 +575,10 @@
 				"SoftwareRevision": "3.17.80",
 				"YearOfConstruction": 2022
 			},
-			"References": {
-				"TypeDefinition": "MachineToolType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		},
 		{
 			"NodeId": "ns=42;s=MyMachine",
@@ -507,15 +587,19 @@
 				"BrowseName": "42:MyMachine",
 				"Description": null
 			},
+			"References": {
+				"TypeDefinition": "BaseObjectType"
+			},
 			"Identification": {
 				"ProductInstanceUri": "",
 				"Manufacturer": "Andreas Heine",
 				"Model": null,
 				"SerialNumber": ""
 			},
-			"References": {
-				"TypeDefinition": "BaseObjectType"
-			}
+			"Components": [],
+			"MachineryItemState": "unknown",
+			"MachineryOperationMode": "unknown",
+			"Monitoring": null
 		}
 	]
 }

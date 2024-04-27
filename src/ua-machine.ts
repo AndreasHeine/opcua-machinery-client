@@ -18,8 +18,11 @@ export class UaMachineryMachine {
     session: ClientSession
     nodeId: string
     attributes: Map<string, any> = new Map()
-    identification: Map<string, any> = new Map()
     references: Map<string, any> = new Map()
+    identification: Map<string, any> = new Map()
+    components: Map<string, any> = new Map()
+    itemState: string = "unknown"
+    operationMode: string = "unknown"
 
     constructor(session: ClientSession, nodeId: string) {
         this.session = session
@@ -165,8 +168,12 @@ export class UaMachineryMachine {
         return {
             NodeId: this.nodeId,
             Attributes: Object.fromEntries(this.attributes.entries()),
-            Identification: Object.fromEntries(this.identification.entries()),
             References: Object.fromEntries(this.references.entries()),
+            Identification: Object.fromEntries(this.identification.entries()),
+            Components: Array.from(this.components.values()),
+            MachineryItemState: this.itemState,
+            MachineryOperationMode: this.operationMode,
+            Monitoring: null
         }
     }
 }
