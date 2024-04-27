@@ -131,7 +131,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private subscription: ClientSubscription | undefined
 
     private namespaceArray: string[] = []
-    private serverPrfileArray: string[] = []
+    private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
     private serviceLevel: number = 0
 
@@ -191,45 +191,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         })
     }
 
-    async initialize() {
-        await this.client.connect(this.endpoint)
-        await this.createSession(userIdentityInfo)
-        await this.readServerState()
-        if (this.serverState > 0) {
-            console.error(`OPC UA Client: OPC UA Device @ '${this.endpoint}' has invalid ServerState '${this.serverState}'`)
-            await this.client.disconnect()
-            console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
-            setTimeout(async () => {
-                await this.initialize()
-            }, 10000)
-            return
-        }
-        await this.readServiceLevel()
-        if (this.serviceLevel <= 200) {
-            console.error(`OPC UA Client: OPC UA Device @ '${this.endpoint}' has insufficient ServiceLevel '${this.serviceLevel}'`)
-            await this.client.disconnect()
-            console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
-            setTimeout(async () => {
-                await this.initialize()
-            }, 10000)
-            return
-        }
-        await this.readNameSpaceArray()
-        await this.readServerProfileArray()
-        await this.readDeviceLimits()
-
-        Object.assign(this._summery, {
-            Server: {
-                Endpoint: this.endpoint,
-                ServerState: this.serverState,
-                ServiceLevel: this.serviceLevel,
-                NamespaceArray: this.namespaceArray,
-                ServerProfileArray: this.serverPrfileArray,
-                OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
-            },
-            Machines: Object.fromEntries(this.machines.entries())
-        })
-
+    private async createSubscription() {
         this.subscription = await this.session!.createSubscription2(createSubscriptionRequest)
         this.subscription.on("status_changed", (status: StatusCode, diagnosticInfo: DiagnosticInfo) => {
             console.log(`OPC UA Client: Subscription status_changed! - ${status} - ${diagnosticInfo}`)
@@ -272,10 +234,52 @@ export class OpcUaDeviceClass extends EventEmitter {
         serverTimeMonitoredItem.on("changed", (dataValue: DataValue) => {
             // add to summery
         })
+    }
 
-        await this.setupChangeEvents()
+    async initialize() {
+        await this.client.connect(this.endpoint)
+        await this.createSession(userIdentityInfo)
+        await this.readServerState()
+        if (this.serverState > 0) {
+            console.error(`OPC UA Client: OPC UA Device @ '${this.endpoint}' has invalid ServerState '${this.serverState}'`)
+            await this.client.disconnect()
+            console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
+            setTimeout(async () => {
+                await this.initialize()
+            }, 10000)
+            return
+        }
+        await this.readServiceLevel()
+        if (this.serviceLevel <= 200) {
+            console.error(`OPC UA Client: OPC UA Device @ '${this.endpoint}' has insufficient ServiceLevel '${this.serviceLevel}'`)
+            await this.client.disconnect()
+            console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
+            setTimeout(async () => {
+                await this.initialize()
+            }, 10000)
+            return
+        }
+        await this.readNameSpaceArray()
+        await this.readServerProfileArray()
+        await this.readDeviceLimits()
+
+        Object.assign(this._summery, {
+            Server: {
+                Endpoint: this.endpoint,
+                ServerState: this.serverState,
+                ServiceLevel: this.serviceLevel,
+                NamespaceArray: this.namespaceArray,
+                ServerProfileArray: this.serverProfileArray,
+                OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
+            },
+            Machines: Object.fromEntries(this.machines.entries())
+        })
+
         await this.findMachinesOnServer()
-        await this.discoverMachines()
+        await this.discoverFoundMachines()
+
+        await this.createSubscription()
+        await this.setupChangeEvents()
     }
 
     async disconnect() {
@@ -473,8 +477,8 @@ export class OpcUaDeviceClass extends EventEmitter {
             attributeId: AttributeIds.Value
         })
         // check statuscode!
-        this.serverPrfileArray = dv!.value.value
-        console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${this.serverPrfileArray}]' StatusCode '${dv.statusCode.name}'`)
+        this.serverProfileArray = dv!.value.value
+        console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${this.serverProfileArray}]' StatusCode '${dv.statusCode.name}'`)
     }   
 
     private getNamespaceIndex(uri: string): number | undefined {
@@ -482,7 +486,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         return index === -1 ? undefined : index
     }
 
-    private async discoverMachines() {
+    private async discoverFoundMachines() {
         for (let index = 0; index < this.foundMachines.length; index++) {
             const machineNodeId = this.foundMachines[index]
             console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${this.foundMachines.length}] -> id='${machineNodeId}'`)
