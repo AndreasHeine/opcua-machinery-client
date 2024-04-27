@@ -207,7 +207,14 @@
 				"ProductInstanceUri": "TestProductInstanceUri",
 				"SerialNumber": "RobotControllerSerialNumber"
 			},
-			"Components": [],
+			"Components": [
+				{
+					"NodeId": "ns=24;i=5033",
+					"Attributes": {
+						"DisplayName": "Drive1"
+					}
+				}
+			],
 			"MachineryItemState": "unknown",
 			"MachineryOperationMode": "unknown",
 			"Monitoring": null
@@ -233,7 +240,14 @@
 				"ProductInstanceUri": "TestMotionDeviceProductInstanceUri",
 				"SerialNumber": "TestMotionDeviceSerialNumber"
 			},
-			"Components": [],
+			"Components": [
+				{
+					"NodeId": "ns=24;i=5025",
+					"Attributes": {
+						"DisplayName": "Motor1"
+					}
+				}
+			],
 			"MachineryItemState": "unknown",
 			"MachineryOperationMode": "unknown",
 			"Monitoring": null
