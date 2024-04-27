@@ -6,7 +6,7 @@ The opcua-machinery-client connects to a OPC UA Server reads general Information
 
 ### Roadmap:
 
-:heavy_check_mark: -> Implementet  
+:heavy_check_mark: -> Implemented  
 :x: -> Not Implemented yet
 
 #### OPC 40001-1: Machinery Basic Building Blocks (https://reference.opcfoundation.org/Machinery/v103/docs/5)
