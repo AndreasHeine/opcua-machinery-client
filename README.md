@@ -14,7 +14,7 @@ The opcua-machinery-client connects to a OPC UA Server reads general Information
 :heavy_check_mark: 5.1 Machine Identification and Nameplate   
 :heavy_check_mark: 5.2 Finding all Machines in a Server    
 :x: 5.3 Component Identification and Nameplate  
-:x: 5.4 Finding all Components of a Machine    
+:heavy_check_mark: 5.4 Finding all Components of a Machine    
 :x: 5.5 Machine Monitoring  
 :x: 5.6 Preventive Maintenance  
 
