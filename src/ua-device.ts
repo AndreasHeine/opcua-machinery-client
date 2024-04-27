@@ -133,6 +133,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
+    private serverStatus: any = {}
     private serviceLevel: number = 0
 
     readonly deviceLimits: Map<string, any> = new Map()
@@ -259,6 +260,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             }, 10000)
             return
         }
+        await this.readServerStatus()
         await this.readNameSpaceArray()
         await this.readServerProfileArray()
         await this.readDeviceLimits()
@@ -268,6 +270,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 Endpoint: this.endpoint,
                 ServerState: this.serverState,
                 ServiceLevel: this.serviceLevel,
+                // ServerStatus: this.serverStatus.toJSON(), // TODO: Upper CamelCase!
                 NamespaceArray: this.namespaceArray,
                 ServerProfileArray: this.serverProfileArray,
                 OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
@@ -395,6 +398,17 @@ export class OpcUaDeviceClass extends EventEmitter {
         // check statuscode!
         this.serverState = dv?.value.value
         console.log(`OPC UA Client: read i=2259 [Server_ServerStatus_State] Value '${this.serverState}' StatusCode '${dv.statusCode.name}'`)
+    }
+
+    private async readServerStatus() {
+        // i=2256 [Server_ServerStatus]
+        const dv = await this.session!.read({
+            nodeId: "i=2256",
+            attributeId: AttributeIds.Value
+        })
+        // check statuscode!
+        this.serverStatus = dv?.value.value
+        console.log(`OPC UA Client: read i=2256 [Server_ServerStatus_State] Value '${this.serverStatus}' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readServiceLevel() {
