@@ -344,14 +344,9 @@ export class OpcUaDeviceClass extends EventEmitter {
             this._queuedBaseModelChangeEvents = []
         }
         if (this._queuedGeneralModelChangeEvents.length > 0) {
-            // get AffectedNodes from EventData
-            const affectedNodes: any[] = []
-            for (let index = 0; index < affectedNodes.length; index++) {
-                const node = affectedNodes[index];
-                const item = this._relatedNodeIdMap.get(node.nodeId)
-                if (item !== undefined) {
-                    await item.initialize()
-                }
+            for (let index = 0; index < this._queuedGeneralModelChangeEvents.length; index++) {
+                const values = this._queuedGeneralModelChangeEvents[index];
+                await this.processGeneralModelChangeEvent(values)
             }
             this._queuedGeneralModelChangeEvents = []
         }
@@ -420,14 +415,6 @@ export class OpcUaDeviceClass extends EventEmitter {
             {
                 discardOldest: true,
                 filter: constructEventFilter([
-                    // "EventId",
-                    // "EventType",
-                    // "SourceNode",
-                    // "SourceName",
-                    // "Time",
-                    // "ReceiveTime",
-                    // "Message",
-                    // "Severity",
                     "Changes"
                 ], ofType("GeneralModelChangeEventType")),
                 queueSize: 100000
@@ -440,19 +427,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             if (this._initialized === false) {
                 this._queuedGeneralModelChangeEvents.push(values)
             } else {
-                for (let index = 0; index < values.length; index++) {
-                    const variant = values[index];
-                    if (Array.isArray(variant.value)) {
-                        // TODO
-                        // itterate over array create a set of items to initialize!
-                        const nodeId = variant.value[0].affected.toString()
-                        const item = this._relatedNodeIdMap.get(nodeId)
-                        if (item !== undefined) {
-                            console.log(`OPC UA Client: reinitializing item with nodeId='${nodeId}' class='${item.constructor.name}'`)
-                            await item.initialize()
-                        }
-                    }
-                }
+                await this.processGeneralModelChangeEvent(values)
             }
         })
         const semanticChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
@@ -487,6 +462,31 @@ export class OpcUaDeviceClass extends EventEmitter {
                 // TODO !!!
             }
         })
+    }
+
+    private async processGeneralModelChangeEvent(values: Variant[]) {
+        for (let index = 0; index < values.length; index++) {
+            const variant = values[index];
+            if (Array.isArray(variant.value)) {
+                const changes = variant.value
+                const toBeInitialized = new Set<UaMachineryMachine | UaMachineryComponent>()
+                for (let index = 0; index < changes.length; index++) {
+                    const change = changes[index];
+                    const nodeId = change.affected.toString()
+                    const item = this._relatedNodeIdMap.get(nodeId)
+                    if (item !== undefined) {
+                        toBeInitialized.add(item)
+                    }
+                }
+                // creating a set should remove duplicates
+                const arr = Array.from(toBeInitialized)
+                for (let index = 0; index < arr.length; index++) {
+                    const item = arr[index];
+                    console.log(`OPC UA Client: reinitializing item with nodeId='${item.nodeId}' class='${item.constructor.name}'`)
+                    await item.initialize()
+                }
+            }
+        }
     }
 
     private async readServerState() {

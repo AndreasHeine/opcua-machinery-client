@@ -19,7 +19,7 @@ import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
 export class UaMachineryMachine {
 
     private session: ClientSession
-    private readonly nodeId: string
+    readonly nodeId: string
     attributes: Map<string, any> = new Map()
     references: Map<string, any> = new Map()
     identification: Map<string, any> = new Map()
