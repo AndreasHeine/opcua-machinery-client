@@ -211,7 +211,23 @@
 				{
 					"NodeId": "ns=24;i=5033",
 					"Attributes": {
-						"DisplayName": "Drive1"
+						"DisplayName": "Drive1",
+						"BrowseName": "24:Drive1",
+						"Description": null
+					},
+					"References": {
+						"TypeDefinition": "DriveType"
+					},
+					"Identification": {
+						"DeviceManual": "TestDriveDeviceManual",
+						"DeviceRevision": "TestDriveDeviceRevision",
+						"HardwareRevision": "TestDriveHardwareRevision",
+						"Manufacturer": "TestDriveManufacturer",
+						"Model": "TestDriveModel",
+						"ProductCode": "TestDriveProductCode",
+						"RevisionCounter": 10,
+						"SerialNumber": "TestDeviceSerialNumber",
+						"SoftwareRevision": "TestDeviceSoftwareRevision"
 					}
 				}
 			],
@@ -244,7 +260,18 @@
 				{
 					"NodeId": "ns=24;i=5025",
 					"Attributes": {
-						"DisplayName": "Motor1"
+						"DisplayName": "Motor1",
+						"BrowseName": "24:Motor1",
+						"Description": null
+					},
+					"References": {
+						"TypeDefinition": "MotorType"
+					},
+					"Identification": {
+						"Manufacturer": "TestMotorManufacturer",
+						"Model": "TestMotorModel",
+						"ProductCode": "TestMotorProductCode",
+						"SerialNumber": "TestMotorSerialNumber"
 					}
 				}
 			],

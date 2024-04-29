@@ -2,6 +2,7 @@ import {
     AttributeIds, 
     BrowseDescriptionLike, 
     BrowseDirection, 
+    ClientMonitoredItem, 
     ClientSession, 
     DataTypeIds, 
     DataValue, 
@@ -17,23 +18,25 @@ import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
 
 export class UaMachineryMachine {
 
-    session: ClientSession
-    nodeId: string
+    private session: ClientSession
+    private readonly nodeId: string
     attributes: Map<string, any> = new Map()
     references: Map<string, any> = new Map()
     identification: Map<string, any> = new Map()
     components: Map<string, any> = new Map()
     itemState: string = "unknown"
     operationMode: string = "unknown"
-    operationCounters: any = null
-    lifetimeCounters: any = null
+    
+    _relatedNodeIds = new Set()
 
     _components: ReferenceDescription[] = []
     _addIns: ReferenceDescription[] = []
+    _monitoredItems: ClientMonitoredItem[] = []
 
     constructor(session: ClientSession, nodeId: string) {
         this.session = session
         this.nodeId = nodeId
+        this._relatedNodeIds.add(nodeId)
     }
 
     async initialize() {
@@ -92,6 +95,7 @@ export class UaMachineryMachine {
         if (browseResult.references!.length > 1) {
             console.warn(`Machine-Instance '${this.nodeId}' as more then one TypeDefinition-Reference!`)
         }
+        this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(browseResult.references![0].nodeId))
         const typeDefinitionReadResult: DataValue = await this.session.read({
             nodeId: browseResult.references![0].nodeId,
             attributeId: AttributeIds.DisplayName
@@ -111,6 +115,9 @@ export class UaMachineryMachine {
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasAddIn
         } as BrowseDescriptionLike)
+        browseResult.references?.forEach((reference: ReferenceDescription) => {
+            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(reference.nodeId))
+        })
         return browseResult.references
     }
 
@@ -126,12 +133,13 @@ export class UaMachineryMachine {
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasComponent
         } as BrowseDescriptionLike)
+        browseResult.references?.forEach((reference: ReferenceDescription) => {
+            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(reference.nodeId))
+        })
         return browseResult.references
     }
 
     async loadMachineIdentification() {
-        if (this._addIns === null) return
-        if (this._addIns.length === 0) return
         for (let index = 0; index < this._addIns.length; index++) {
             const id = this._addIns[index].nodeId;
             const readResult = await this.session.read({
@@ -151,6 +159,9 @@ export class UaMachineryMachine {
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.HasProperty
                     } as BrowseDescriptionLike)
+                    identificationBrowseResults.references?.forEach((reference: ReferenceDescription) => {
+                        this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(reference.nodeId))
+                    })
                     if (identificationBrowseResults.statusCode.value === StatusCodes.Good.value) {
                         for (let index = 0; index < identificationBrowseResults.references!.length; index++) {
                             const id = identificationBrowseResults.references![index].nodeId;
