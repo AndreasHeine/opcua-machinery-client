@@ -23,6 +23,7 @@ import {
     ReadValueIdOptions,
     MonitoringParametersOptions,
     MonitoringMode,
+    Variant,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -147,9 +148,9 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent> = new Map()
     private _initialized = false
-    private _queuedBaseModelChangeEvents: DataValue[] = []
-    private _queuedGeneralModelChangeEvents: DataValue[] = []
-    private _queuedSemanticChangeEvents: DataValue[] = []
+    private _queuedBaseModelChangeEvents: Variant[][] = []
+    private _queuedGeneralModelChangeEvents: Variant[][] = []
+    private _queuedSemanticChangeEvents: Variant[][] = []
 
     constructor (endpoint: string) {
         super();
@@ -323,7 +324,14 @@ export class OpcUaDeviceClass extends EventEmitter {
         console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's [${relatedNodes}]`)
 
         this._initialized = true
-        await this.processQueuedChangeEvents()
+
+        if (
+            this._queuedBaseModelChangeEvents.length > 0 ||
+            this._queuedGeneralModelChangeEvents.length > 0 ||
+            this._queuedSemanticChangeEvents.length > 0
+        ) {
+            await this.processQueuedChangeEvents()
+        }
     }
 
     async processQueuedChangeEvents() {
@@ -394,11 +402,11 @@ export class OpcUaDeviceClass extends EventEmitter {
             },
             TimestampsToReturn.Both
         )
-        baseModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
+        baseModelChangeEventMonitoredItem.on("changed", async (values: Variant[]) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: BaseModelChangeEvent received!`)
             if (this._initialized === false) {
-                this._queuedBaseModelChangeEvents.push(dataValue)
+                this._queuedBaseModelChangeEvents.push(values)
             } else {
                 // TODO !!!
             }
@@ -412,27 +420,39 @@ export class OpcUaDeviceClass extends EventEmitter {
             {
                 discardOldest: true,
                 filter: constructEventFilter([
-                    "EventId",
-                    "EventType",
-                    "SourceNode",
-                    "SourceName",
-                    "Time",
-                    "ReceiveTime",
-                    "Message",
-                    "Severity",
+                    // "EventId",
+                    // "EventType",
+                    // "SourceNode",
+                    // "SourceName",
+                    // "Time",
+                    // "ReceiveTime",
+                    // "Message",
+                    // "Severity",
                     "Changes"
                 ], ofType("GeneralModelChangeEventType")),
                 queueSize: 100000
             },
             TimestampsToReturn.Both
         )
-        generalModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
+        generalModelChangeEventMonitoredItem.on("changed", async (values: Variant[]) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: GeneralModelChangeEvent received!`)
             if (this._initialized === false) {
-                this._queuedGeneralModelChangeEvents.push(dataValue)
+                this._queuedGeneralModelChangeEvents.push(values)
             } else {
-                // TODO !!!
+                for (let index = 0; index < values.length; index++) {
+                    const variant = values[index];
+                    if (Array.isArray(variant.value)) {
+                        // TODO
+                        // itterate over array create a set of items to initialize!
+                        const nodeId = variant.value[0].affected.toString()
+                        const item = this._relatedNodeIdMap.get(nodeId)
+                        if (item !== undefined) {
+                            console.log(`OPC UA Client: reinitializing item with nodeId='${nodeId}' class='${item.constructor.name}'`)
+                            await item.initialize()
+                        }
+                    }
+                }
             }
         })
         const semanticChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
@@ -458,11 +478,11 @@ export class OpcUaDeviceClass extends EventEmitter {
             },
             TimestampsToReturn.Both
         )
-        semanticChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
+        semanticChangeEventMonitoredItem.on("changed", async (values: Variant[]) => {
             // https://reference.opcfoundation.org/Core/Part3/v104/docs/9.33
             console.warn(`OPC UA Client: SemanticChangeEventType received!`)
             if (this._initialized === false) {
-                this._queuedSemanticChangeEvents.push(dataValue)
+                this._queuedSemanticChangeEvents.push(values)
             } else {
                 // TODO !!!
             }
@@ -488,7 +508,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         })
         // check statuscode!
         this.serverStatus = dv?.value.value
-        console.log(`OPC UA Client: read i=2256 [Server_ServerStatus_State] Value '${this.serverStatus}' StatusCode '${dv.statusCode.name}'`)
+        console.log(`OPC UA Client: read i=2256 [Server_ServerStatus] Value '${JSON.stringify(this.serverStatus)}' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readServiceLevel() {

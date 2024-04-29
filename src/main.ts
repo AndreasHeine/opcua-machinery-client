@@ -14,7 +14,7 @@ const UaDevice = new OpcUaDeviceClass("opc.tcp://opcua.umati.app:4843")
     try {
         process.on('SIGINT', shutdown)
         process.on('SIGTERM', shutdown)
-        console.log('OPC-UA-Client: connecting...')
+        console.log('OPC-UA-Client: initializing...')
         await UaDevice.initialize()
     } catch (error: any) {
         console.error(`OPC-UA-Client: error '${(error as Error).name}' message '${(error as Error).message}'`)
