@@ -2,7 +2,7 @@
 
 ### A small Project to showcase the OPC UA for Machinery from the End-User perspective!
 
-The opcua-machinery-client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components. At the and an output.json will be created with the collected results of the OPC UA Server!
+The opcua-machinery-client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components. At the an an output.json will be created with the collected results of the OPC UA Server!
 
 ### Roadmap:
 
