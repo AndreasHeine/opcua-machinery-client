@@ -30,6 +30,7 @@ import {
 } from './ua-helper';
 import { writeJson } from 'fs-extra';
 import { UaMachineryMachine } from './ua-machine';
+import { UaMachineryComponent } from './ua-machine-component';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -143,6 +144,12 @@ export class OpcUaDeviceClass extends EventEmitter {
     private _summery = Object.create({})
 
     reinitializing: boolean = false
+
+    private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent> = new Map()
+    private _initialized = false
+    private _queuedBaseModelChangeEvents: DataValue[] = []
+    private _queuedGeneralModelChangeEvents: DataValue[] = []
+    private _queuedSemanticChangeEvents: DataValue[] = []
 
     constructor (endpoint: string) {
         super();
@@ -270,7 +277,21 @@ export class OpcUaDeviceClass extends EventEmitter {
                 Endpoint: this.endpoint,
                 ServerState: this.serverState,
                 ServiceLevel: this.serviceLevel,
-                // ServerStatus: this.serverStatus.toJSON(), // TODO: Upper CamelCase!
+                ServerStatus: {
+                    StartTime: this.serverStatus.startTime,
+                    CurrentTime: this.serverStatus.currentTime,
+                    State: this.serverStatus.state,
+                    BuildInfo: {
+                        ProductUri: this.serverStatus.buildInfo.productUri,
+                        ManufacturerName: this.serverStatus.buildInfo.manufacturerName,
+                        ProductName: this.serverStatus.buildInfo.productName,
+                        SoftwareVersion: this.serverStatus.buildInfo.softwareVersion,
+                        BuildNumber: this.serverStatus.buildInfo.buildNumber,
+                        BuildDate: this.serverStatus.buildInfo.buildDate
+                    },
+                    SecondsTillShutdown: this.serverStatus.secondsTillShutdown,
+                    ShutdownReason: `${this.serverStatus.shutdownReason.text}`
+                },
                 NamespaceArray: this.namespaceArray,
                 ServerProfileArray: this.serverProfileArray,
                 OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
@@ -282,6 +303,54 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         await this.findMachinesOnServer()
         await this.discoverFoundMachines()
+
+        const machines = Array.from(this.machines.values())
+        for (let index = 0; index < machines.length; index++) {
+            const machine = machines[index] as UaMachineryMachine
+            machine._relatedNodeIds.forEach((nodeId) => {
+                this._relatedNodeIdMap.set(nodeId, machine)
+            })
+            const components: UaMachineryComponent[] = Array.from(machine.components.values())
+            for (let index = 0; index < components.length; index++) {
+                const component = components[index];
+                component._relatedNodeIds.forEach((nodeId) => {
+                    this._relatedNodeIdMap.set(nodeId, component)
+                })
+            }
+        }
+
+        const relatedNodes = Array.from(this._relatedNodeIdMap.keys())
+        console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's [${relatedNodes}]`)
+
+        this._initialized = true
+        await this.processQueuedChangeEvents()
+    }
+
+    async processQueuedChangeEvents() {
+        console.log(`OPC UA Client: processing queued ChangeEvents [Base=${this._queuedBaseModelChangeEvents.length},General=${this._queuedGeneralModelChangeEvents.length},Semantic=${this._queuedSemanticChangeEvents.length}]`)
+        const machines = Array.from(this.machines.values())
+        if (this._queuedBaseModelChangeEvents.length > 0) {
+            for (let index = 0; index < machines.length; index++) {
+                // await machines[index].initialize()
+            }
+            this._queuedBaseModelChangeEvents = []
+        }
+        if (this._queuedGeneralModelChangeEvents.length > 0) {
+            // get AffectedNodes from EventData
+            const affectedNodes: any[] = []
+            for (let index = 0; index < affectedNodes.length; index++) {
+                const node = affectedNodes[index];
+                const item = this._relatedNodeIdMap.get(node.nodeId)
+                if (item !== undefined) {
+                    await item.initialize()
+                }
+            }
+            this._queuedGeneralModelChangeEvents = []
+        }
+        if (this._queuedSemanticChangeEvents.length > 0) {
+            // What to do?
+            this._queuedSemanticChangeEvents = []
+        }
     }
 
     async disconnect() {
@@ -328,9 +397,11 @@ export class OpcUaDeviceClass extends EventEmitter {
         baseModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: BaseModelChangeEvent received!`)
-            Array.from(this.machines.values()).forEach(machine => {
-                machine.emit("BaseModelChangeEvent", dataValue)
-            });
+            if (this._initialized === false) {
+                this._queuedBaseModelChangeEvents.push(dataValue)
+            } else {
+                // TODO !!!
+            }
         })
         const generalModelChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -358,9 +429,11 @@ export class OpcUaDeviceClass extends EventEmitter {
         generalModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: GeneralModelChangeEvent received!`)
-            Array.from(this.machines.values()).forEach(machine => {
-                machine.emit("GeneralModelChangeEvent", dataValue)
-            });
+            if (this._initialized === false) {
+                this._queuedGeneralModelChangeEvents.push(dataValue)
+            } else {
+                // TODO !!!
+            }
         })
         const semanticChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -388,9 +461,11 @@ export class OpcUaDeviceClass extends EventEmitter {
         semanticChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/v104/docs/9.33
             console.warn(`OPC UA Client: SemanticChangeEventType received!`)
-            Array.from(this.machines.values()).forEach(machine => {
-                machine.emit("SemanticChangeEvent", dataValue)
-            });
+            if (this._initialized === false) {
+                this._queuedSemanticChangeEvents.push(dataValue)
+            } else {
+                // TODO !!!
+            }
         })
     }
 
@@ -517,7 +592,6 @@ export class OpcUaDeviceClass extends EventEmitter {
         // console.log(JSON.stringify(this._summery, null, '\t'))
         writeJson("output.json", this._summery, {spaces: '\t'})
         console.log("OPC UA Client: 'output.json' created!")
-        await this.disconnect()
     }
 
     private async findMachinesOnServer() {

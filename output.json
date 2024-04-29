@@ -3,6 +3,21 @@
 		"Endpoint": "opc.tcp://opcua.umati.app:4843",
 		"ServerState": 0,
 		"ServiceLevel": 255,
+		"ServerStatus": {
+			"StartTime": "2024-04-28T22:22:00.127Z",
+			"CurrentTime": "2024-04-29T14:51:25.532Z",
+			"State": 0,
+			"BuildInfo": {
+				"ProductUri": "SampleServer-productUri",
+				"ManufacturerName": "SampleServer-manufacturerName",
+				"ProductName": "SampleServer-productName",
+				"SoftwareVersion": "node-opcua: 2.124.0",
+				"BuildNumber": "v1.1.0",
+				"BuildDate": "2024-04-22T00:00:00.000Z"
+			},
+			"SecondsTillShutdown": 0,
+			"ShutdownReason": "null"
+		},
 		"NamespaceArray": [
 			"http://opcfoundation.org/UA/",
 			"urn:SampleServer",

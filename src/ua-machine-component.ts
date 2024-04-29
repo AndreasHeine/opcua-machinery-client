@@ -1,8 +1,21 @@
-import { AttributeIds, BrowseDescriptionLike, BrowseDirection, ClientMonitoredItem, ClientSession, DataTypeIds, DataValue, LocalizedText, QualifiedName, ReadValueIdOptions, ReferenceDescription, ReferenceTypeIds, StatusCodes } from "node-opcua"
+import { 
+    AttributeIds, 
+    BrowseDescriptionLike, 
+    BrowseDirection, 
+    ClientMonitoredItem, 
+    ClientSession, 
+    DataTypeIds, 
+    DataValue, 
+    LocalizedText, 
+    QualifiedName, 
+    ReadValueIdOptions, 
+    ReferenceDescription, 
+    ReferenceTypeIds, 
+    StatusCodes 
+} from "node-opcua"
 import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper"
-import EventEmitter from "events"
 
-export class UaMachineryComponent extends EventEmitter  {
+export class UaMachineryComponent {
 
     private session: ClientSession
     private readonly nodeId: string
@@ -10,25 +23,16 @@ export class UaMachineryComponent extends EventEmitter  {
     references: Map<string, any> = new Map()
     identification: Map<string, any> = new Map()
 
-    _relatedNodeIds = new Set()
+    _lastInitialization = new Date()
+    _relatedNodeIds = new Set<string>()
     _components: ReferenceDescription[] = []
     _addIns: ReferenceDescription[] = []
     _monitoredItems: ClientMonitoredItem[] = []
 
     constructor(session: ClientSession, nodeId: string) {
-        super()
         this.session = session
         this.nodeId = nodeId
         this._relatedNodeIds.add(nodeId)
-        this.on("BaseModelChangeEvent", async (dataValue: DataValue) => {
-            
-        })
-        this.on("GeneralModelChangeEventType", async (dataValue: DataValue) => {
-            
-        })
-        this.on("SemanticChangeEvent", async (dataValue: DataValue) => {
-            
-        })
     }
 
     async initialize() {
@@ -61,6 +65,7 @@ export class UaMachineryComponent extends EventEmitter  {
             this._addIns = addIns
         }
         await this.discoverMachine()
+        this._lastInitialization = new Date()
     }
 
     async getAddIns(): Promise<ReferenceDescription[] | null> {
