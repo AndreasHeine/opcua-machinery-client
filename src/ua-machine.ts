@@ -15,8 +15,9 @@ import {
 } from "node-opcua";
 import { UaMachineryComponent } from "./ua-machine-component";
 import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
+import EventEmitter from "events";
 
-export class UaMachineryMachine {
+export class UaMachineryMachine extends EventEmitter {
 
     private session: ClientSession
     private readonly nodeId: string
@@ -34,9 +35,29 @@ export class UaMachineryMachine {
     _monitoredItems: ClientMonitoredItem[] = []
 
     constructor(session: ClientSession, nodeId: string) {
+        super()
         this.session = session
         this.nodeId = nodeId
         this._relatedNodeIds.add(nodeId)
+        this.on("BaseModelChangeEvent", async (dataValue: DataValue) => {
+            // await this.initialize()
+            Array.from(this.components.values()).forEach(component => {
+                component.emit("BaseModelChangeEvent", dataValue)
+            });
+        })
+        this.on("GeneralModelChangeEventType", async (dataValue: DataValue) => {
+            // check _relatedNodes
+            // await this.initialize()
+            Array.from(this.components.values()).forEach(component => {
+                component.emit("GeneralModelChangeEvent", dataValue)
+            });
+        })
+        this.on("SemanticChangeEvent", async (dataValue: DataValue) => {
+            // await this.initialize()
+            Array.from(this.components.values()).forEach(component => {
+                component.emit("SemanticChangeEvent", dataValue)
+            });
+        })
     }
 
     async initialize() {

@@ -277,12 +277,11 @@ export class OpcUaDeviceClass extends EventEmitter {
             },
             Machines: Object.fromEntries(this.machines.entries())
         })
+        await this.createSubscription()
+        await this.setupChangeEvents()
 
         await this.findMachinesOnServer()
         await this.discoverFoundMachines()
-
-        await this.createSubscription()
-        await this.setupChangeEvents()
     }
 
     async disconnect() {
@@ -329,7 +328,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         baseModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: BaseModelChangeEvent received!`)
-            // if (!this.reinitializing) await this.reinitialize()
+            Array.from(this.machines.values()).forEach(machine => {
+                machine.emit("BaseModelChangeEvent", dataValue)
+            });
         })
         const generalModelChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -357,7 +358,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         generalModelChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/9.32.7/
             console.warn(`OPC UA Client: GeneralModelChangeEvent received!`)
-            // if (!this.reinitializing) await this.reinitialize()
+            Array.from(this.machines.values()).forEach(machine => {
+                machine.emit("GeneralModelChangeEvent", dataValue)
+            });
         })
         const semanticChangeEventMonitoredItem: ClientMonitoredItem = ClientMonitoredItem.create(
             this.subscription!,
@@ -385,7 +388,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         semanticChangeEventMonitoredItem.on("changed", async (dataValue: DataValue) => {
             // https://reference.opcfoundation.org/Core/Part3/v104/docs/9.33
             console.warn(`OPC UA Client: SemanticChangeEventType received!`)
-            // if (!this.reinitializing) await this.reinitialize()
+            Array.from(this.machines.values()).forEach(machine => {
+                machine.emit("SemanticChangeEvent", dataValue)
+            });
         })
     }
 
