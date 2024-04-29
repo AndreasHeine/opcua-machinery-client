@@ -94,9 +94,9 @@ const optionsInitial: OPCUAClientOptions = {
     //      */
     //     clientName?: string;
     clientName: "opcua-machinery-client",
-    requestedSessionTimeout: 60*60*1000,
+    requestedSessionTimeout: 30*60*1000,
     endpointMustExist: false,
-    keepSessionAlive: true,
+    keepSessionAlive: false,
     connectionStrategy: {
         initialDelay: 1000,
         maxDelay: 5000,
@@ -114,7 +114,7 @@ const createSubscriptionRequest: CreateSubscriptionRequestOptions = {
     //     publishingEnabled?: UABoolean;
     //     priority?: Byte;
     // }
-    requestedPublishingInterval: 1000,
+    requestedPublishingInterval: 5000,
     maxNotificationsPerPublish: 10000,
     publishingEnabled: true,
     // priority: 1,
@@ -131,6 +131,7 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private session: ClientSession | undefined
     private subscription: ClientSubscription | undefined
+    private monitoredItemMap: Map<string, ClientMonitoredItem> = new Map()
 
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
@@ -218,13 +219,14 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.error(`OPC UA Client: Subscription internal_error! - ${err}`)
         })
 
+        const serverTimeNodeId = "i=2258"
         const serverTimeMonitoredItem = await this.subscription.monitor(
             {
                 // nodeId?: (NodeIdLike | null);
                 // attributeId?: UInt32;
                 // indexRange?: NumericRange;
                 // dataEncoding?: (QualifiedNameLike | null);
-                nodeId: "i=2258",
+                nodeId: serverTimeNodeId,
                 attributeId: AttributeIds.Value
             } as ReadValueIdOptions,
             {
@@ -233,7 +235,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 // filter?: (ExtensionObject | null);
                 // queueSize?: UInt32;
                 // discardOldest?: UABoolean;
-                samplingInterval: 5000,
+                samplingInterval: 10000,
                 queueSize: 1,
                 discardOldest: false
             } as MonitoringParametersOptions,
@@ -241,8 +243,9 @@ export class OpcUaDeviceClass extends EventEmitter {
             MonitoringMode.Reporting
         )
         serverTimeMonitoredItem.on("changed", (dataValue: DataValue) => {
-            // add to summery
+            console.log(`OPC UA Client: recv ServerTime update! ${dataValue.value.value}`)
         })
+        this.monitoredItemMap.set(serverTimeNodeId, serverTimeMonitoredItem)
     }
 
     async initialize() {
