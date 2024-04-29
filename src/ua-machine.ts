@@ -238,7 +238,7 @@ export class UaMachineryMachine {
             Components: Array.from(this.components.values()).map((c) => {return c.toJSON()}),
             MachineryItemState: this.itemState,
             MachineryOperationMode: this.operationMode,
-            Monitoring: null
+            Monitoring: []
         }
     }
 }
