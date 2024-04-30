@@ -2,7 +2,6 @@ import {
     AttributeIds, 
     BrowseDescriptionLike, 
     BrowseDirection, 
-    ClientMonitoredItem, 
     ClientSession, 
     DataTypeIds, 
     DataValue, 
@@ -15,6 +14,7 @@ import {
 } from "node-opcua";
 import { UaMachineryComponent } from "./ua-machine-component";
 import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
+import { UaProcessValue } from "./ua-processvalue";
 
 export class UaMachineryMachine {
 
@@ -23,7 +23,9 @@ export class UaMachineryMachine {
     attributes: Map<string, any> = new Map()
     references: Map<string, any> = new Map()
     identification: Map<string, any> = new Map()
-    components: Map<string, any> = new Map()
+    components: Map<string, UaMachineryComponent> = new Map()
+    monitoring: Map<string, UaProcessValue> = new Map()
+
     itemState: string = "unknown"
     operationMode: string = "unknown"
 
@@ -31,7 +33,6 @@ export class UaMachineryMachine {
     _relatedNodeIds = new Set<string>()
     _components: ReferenceDescription[] = []
     _addIns: ReferenceDescription[] = []
-    _monitoredItems: ClientMonitoredItem[] = []
 
     constructor(session: ClientSession, nodeId: string) {
         this.session = session
@@ -74,6 +75,12 @@ export class UaMachineryMachine {
         }
         await this.discoverMachine()
         this._lastInitialization = new Date()
+    }
+
+    notify(nodeId: string, dataValue: DataValue) {
+        Array.from(this.monitoring.values()).map((processValue)  => {
+            processValue.notify(nodeId, dataValue)
+        })
     }
 
     async discoverMachine() {
@@ -239,7 +246,7 @@ export class UaMachineryMachine {
             Components: Array.from(this.components.values()).map((c) => {return c.toJSON()}),
             MachineryItemState: this.itemState,
             MachineryOperationMode: this.operationMode,
-            Monitoring: []
+            Monitoring: Array.from(this.monitoring.values()).map((c) => {return c.toJSON()})
         }
     }
 }

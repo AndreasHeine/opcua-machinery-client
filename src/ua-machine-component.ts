@@ -1,8 +1,7 @@
 import { 
     AttributeIds, 
     BrowseDescriptionLike, 
-    BrowseDirection, 
-    ClientMonitoredItem, 
+    BrowseDirection,  
     ClientSession, 
     DataTypeIds, 
     DataValue, 
@@ -27,7 +26,6 @@ export class UaMachineryComponent {
     _relatedNodeIds = new Set<string>()
     _components: ReferenceDescription[] = []
     _addIns: ReferenceDescription[] = []
-    _monitoredItems: ClientMonitoredItem[] = []
 
     constructor(session: ClientSession, nodeId: string) {
         this.session = session

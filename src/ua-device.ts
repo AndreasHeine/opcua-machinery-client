@@ -134,21 +134,16 @@ export class OpcUaDeviceClass extends EventEmitter {
     private session: ClientSession | undefined
     private subscription: ClientSubscription | undefined
     private monitoredItemMap: Map<string, ClientMonitoredItem> = new Map()
-
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
     private serverStatus: any = {}
     private serviceLevel: number = 0
-
-    readonly deviceLimits: Map<string, any> = new Map()
-
+    private deviceLimits: Map<string, any> = new Map()
     private foundMachines: string[] = []
     private machines: Map<string, any> = new Map()
-    private _summery = Object.create({})
-
+    private summery = Object.create({})
     private _reinitializing: boolean = false
-
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent> = new Map()
     private _initialized = false
     private _queuedBaseModelChangeEvents: Variant[][] = []
@@ -268,14 +263,20 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: Subscription started! subscriptionId='${subscriptionId}'`)
         })
         this.subscription.on("received_notifications", (notificationMessage: NotificationMessage) => {
-            console.log(`OPC UA Client: Subscription got notification message! notificationMessage='${notificationMessage}'`)
+            console.log(`OPC UA Client: Subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
             console.log(`OPC UA Client: MonitoredItem has been added to Subscription! monitoredItem='${monitoredItem}'`)
+            this.monitoredItemMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
+            monitoredItem.on("changed", (dataValue: DataValue) => {
+                Array.from(this.machines.values()).map((machine)  => {
+                    machine.notify(monitoredItem.itemToMonitor.nodeId.toString(), dataValue)
+                })
+            })
         })
 
         const serverTimeNodeId = "i=2258"
-        const serverTimeMonitoredItem = await this.subscription.monitor(
+        await this.subscription.monitor(
             {
                 // nodeId?: (NodeIdLike | null);
                 // attributeId?: UInt32;
@@ -297,10 +298,6 @@ export class OpcUaDeviceClass extends EventEmitter {
             TimestampsToReturn.Both,
             MonitoringMode.Reporting
         )
-        serverTimeMonitoredItem.on("changed", (dataValue: DataValue) => {
-            console.log(`OPC UA Client: recv ServerTime update! ${dataValue.value.value}`)
-        })
-        this.monitoredItemMap.set(serverTimeNodeId, serverTimeMonitoredItem)
     }
 
     async initialize() {
@@ -331,7 +328,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         await this.readServerProfileArray()
         await this.readDeviceLimits()
 
-        Object.assign(this._summery, {
+        Object.assign(this.summery, {
             Server: {
                 Endpoint: this.endpoint,
                 ServerState: this.serverState,
@@ -666,9 +663,9 @@ export class OpcUaDeviceClass extends EventEmitter {
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
         }
-        this._summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
+        this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         // console.log(JSON.stringify(this._summery, null, '\t'))
-        writeJson("output.json", this._summery, {spaces: '\t'})
+        writeJson("output.json", this.summery, {spaces: '\t'})
         console.log("OPC UA Client: 'output.json' created!")
     }
 
