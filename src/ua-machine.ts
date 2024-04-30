@@ -246,6 +246,7 @@ export class UaMachineryMachine {
             // add to _relatedNodeIds
             // create ProcessValue-Class-Instance
             // add Class-Instance to this.monitoring (Map)
+        // add ProcessValue-Class-Instance _relatedNodeIds to Subscription
     }
 
     toJSON() {
