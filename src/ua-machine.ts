@@ -86,6 +86,7 @@ export class UaMachineryMachine {
     async discoverMachine() {
         await this.loadMachineIdentification()
         await this.loadMachineComponents()
+        await this.loadMonitoring()
     }
 
     async loadMachineTypeDefinition() {
@@ -235,6 +236,16 @@ export class UaMachineryMachine {
                 }
             }
         }
+    }
+
+    async loadMonitoring() {
+        // get the NodeId from the Monitoring-Object
+        // add to _relatedNodeIds
+        // Monitoring-Object -> HasComponent -> ProcessValue-Instances
+            // check TypeDefinition
+            // add to _relatedNodeIds
+            // create ProcessValue-Class-Instance
+            // add Class-Instance to this.monitoring (Map)
     }
 
     toJSON() {
