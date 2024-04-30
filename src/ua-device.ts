@@ -24,6 +24,8 @@ import {
     MonitoringParametersOptions,
     MonitoringMode,
     Variant,
+    ChannelSecurityToken,
+    NotificationMessage,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -145,7 +147,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private machines: Map<string, any> = new Map()
     private _summery = Object.create({})
 
-    reinitializing: boolean = false
+    private _reinitializing: boolean = false
 
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent> = new Map()
     private _initialized = false
@@ -154,22 +156,66 @@ export class OpcUaDeviceClass extends EventEmitter {
     private _queuedSemanticChangeEvents: Variant[][] = []
 
     constructor (endpoint: string) {
-        super();
-        this.endpoint = endpoint;
-        this.client = OPCUAClient.create(optionsInitial);
+        super()
+        this.endpoint = endpoint
+        this.client = OPCUAClient.create(optionsInitial)
         this.client.on("backoff", (retry: number, delay: number) => {
             console.warn(`OPC UA Client: Unable to connect to the OPC UA Device @ '${endpoint}' - attempt '${retry}' retrying in '${delay / 1000.0}' seconds`)
         });
         this.client.on("connected", () => {
-            console.log(`OPC UA Client: Connected to OPC UA Device @ '${endpoint}'`);
+            console.log(`OPC UA Client: Connected to OPC UA Device @ '${endpoint}'`)
         })
         this.client.on("after_reconnection", async () => {
-            console.warn(`OPC UA Client: Reconnected to OPC UA Device @ '${endpoint}'`);
-            await this.readServerState()
-            await this.readServiceLevel()
-            await this.readNameSpaceArray()
-            await this.readDeviceLimits()
+            console.log(`OPC UA Client: Reconnected to OPC UA Device @ '${endpoint}'`)
         })
+        this.client.on("reconnection_attempt_has_failed", (err: Error, message: string) => {
+            console.error(`OPC UA Client: reconnect attemp has failed! err='${err}' message='${message}'`)
+        })
+        this.client.on("abort", () => {
+            console.error(`OPC UA Client: abort!`)
+        })
+        this.client.on("close", () => {
+            console.error(`OPC UA Client: close!`)
+        })
+        this.client.on("connection_failed", (err: Error) => {
+            console.error(`OPC UA Client: connection has failed! err='${err}'`)
+        })
+        this.client.on("connection_lost", () => {
+            console.warn(`OPC UA Client: connection lost!`)
+        })
+        this.client.on("connection_reestablished", () => {
+            console.log(`OPC UA Client: connection reestablished!`)
+        })
+        this.client.on("lifetime_75", (token: ChannelSecurityToken) => {
+            console.log(`OPC UA Client: securechannel token lifetime @ 75%! token='${token}'`)
+        })
+        this.client.on("receive_chunk", () => {
+            // too noisy
+        })
+        this.client.on("receive_response", (response: Response) => {
+            // too noisy
+            // console.log(`OPC UA Client: response='${response}'`)
+        })
+        this.client.on("security_token_renewed", () => {
+            console.log(`OPC UA Client: security token renewed!`)
+        })
+        this.client.on("send_chunk", () => {
+            // too noisy
+        })
+        this.client.on("send_request", (request: Request) => {
+            // too noisy
+            // console.log(`OPC UA Client: request='${request}'`)
+        })
+        this.client.on("start_reconnection", () => {
+            console.log(`OPC UA Client: start reconnection!`)
+        })
+        this.client.on("timed_out_request", (request: Request) => {
+            console.warn(`OPC UA Client: request timed out! request='${request}'`)
+        })
+    }
+
+    get reinitializing() {
+        return this._reinitializing
     }
 
     isConnected(): boolean {
@@ -204,7 +250,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private async createSubscription() {
         this.subscription = await this.session!.createSubscription2(createSubscriptionRequest)
         this.subscription.on("status_changed", (status: StatusCode, diagnosticInfo: DiagnosticInfo) => {
-            console.log(`OPC UA Client: Subscription status_changed! - ${status} - ${diagnosticInfo}`)
+            console.log(`OPC UA Client: Subscription status_changed! status='${status}' diagnosticInfo='${diagnosticInfo}'`)
         })
         this.subscription.on("terminated", () => {
             console.warn(`OPC UA Client: Subscription terminated!`)
@@ -213,10 +259,19 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: Subscription keepalive!`)
         })
         this.subscription.on("error", (err: Error) => {
-            console.error(`OPC UA Client: Subscription error! - ${err}`)
+            console.error(`OPC UA Client: Subscription error! err='${err}'`)
         })
         this.subscription.on("internal_error", (err: Error) => {
-            console.error(`OPC UA Client: Subscription internal_error! - ${err}`)
+            console.error(`OPC UA Client: Subscription internal_error! err='${err}'`)
+        })
+        this.subscription.on("started", (subscriptionId: number) => {
+            console.log(`OPC UA Client: Subscription started! subscriptionId='${subscriptionId}'`)
+        })
+        this.subscription.on("received_notifications", (notificationMessage: NotificationMessage) => {
+            console.log(`OPC UA Client: Subscription got notification message! notificationMessage='${notificationMessage}'`)
+        })
+        this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
+            console.log(`OPC UA Client: MonitoredItem has been added to Subscription! monitoredItem='${monitoredItem}'`)
         })
 
         const serverTimeNodeId = "i=2258"
@@ -370,11 +425,11 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     async reinitialize() {
         console.warn("OPC UA Client: reinitializing")
-        this.reinitializing = true
+        this._reinitializing = true
         await this.disconnect()
         await this.initialize()
         console.warn("OPC UA Client: reinitializing completed!")
-        this.reinitializing = false
+        this._reinitializing = false
     }
 
     private async setupChangeEvents() {
