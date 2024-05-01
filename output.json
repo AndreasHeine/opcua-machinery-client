@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-01T09:14:42.613Z",
+			"CurrentTime": "2024-05-01T13:56:45.880Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -130,8 +130,8 @@
 				"YearOfConstruction": 2024
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=22;i=55228",
@@ -193,8 +193,8 @@
 				"YearOfConstruction": 2022
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=23;i=5011",
@@ -250,8 +250,8 @@
 				"SerialNumber": ""
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=23;i=5018",
@@ -282,8 +282,8 @@
 				"SerialNumber": "SampleMDS_SN_40010"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -330,8 +330,8 @@
 					}
 				}
 			],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -374,8 +374,8 @@
 					}
 				}
 			],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -397,8 +397,8 @@
 				"SerialNumber": "BM123"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -420,8 +420,8 @@
 				"SerialNumber": "IMM123"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -442,8 +442,8 @@
 				"SerialNumber": "Cell123"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -466,8 +466,8 @@
 				"SerialNumber": "987"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -489,8 +489,8 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -512,8 +512,8 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -535,8 +535,8 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -559,8 +559,8 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -583,8 +583,8 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -606,8 +606,8 @@
 				"YearOfConstruction": 2023
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -641,8 +641,8 @@
 				"YearOfConstruction": 2023
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		},
 		{
@@ -661,8 +661,8 @@
 				"SerialNumber": "0815"
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=39;i=5002",
@@ -712,8 +712,8 @@
 				"YearOfConstruction": 2023
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=40;i=5001",
@@ -790,8 +790,8 @@
 				"YearOfConstruction": 2022
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": [
 				{
 					"NodeId": "ns=41;s=MyMachine.Monitoring.Ch1",
@@ -857,8 +857,8 @@
 				"SerialNumber": ""
 			},
 			"Components": [],
-			"MachineryItemState": "unknown",
-			"MachineryOperationMode": "unknown",
+			"MachineryItemState": null,
+			"MachineryOperationMode": null,
 			"Monitoring": []
 		}
 	]

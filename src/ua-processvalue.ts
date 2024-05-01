@@ -43,9 +43,19 @@ export class UaProcessValue {
     private session: ClientSession
     readonly nodeId: string
 
+    /**
+     * Attributes of the Machine-Instance-Object e.g. DisplayName, BrowseName and Description
+     */
     attributes: Map<string, any> = new Map()
 
+    /**
+     * A Set of known NodeId's associated with this class-instance
+     */  
     _relatedNodeIds = new Set<string>()
+
+    /**
+     * A Map containing all the all the dataStoreItem's 
+     */
     _dataStore: Map<string, dataStoreItem> = new Map()
 
     constructor(session: ClientSession, nodeId: string) {
@@ -78,10 +88,10 @@ export class UaProcessValue {
         if (readResults[2].statusCode.value === StatusCodes.Good.value) {
             this.attributes.set("Description", (readResults[2].value.value as LocalizedText).text)
         }
-        await this.discoverProcessValue()
+        await this.discoverMetaData()
     }
 
-    async discoverProcessValue() {
+    async discoverMetaData() {
         // AnalogSignal
             // EURange
             // EngeneeringUnits

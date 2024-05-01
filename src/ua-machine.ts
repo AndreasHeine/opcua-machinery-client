@@ -62,7 +62,7 @@ export class UaMachineryMachine {
     _lastInitialization = new Date()
 
     /**
-     * A Set of known NodeId's
+     * A Set of known NodeId's associated with this class-instance
      */    
     _relatedNodeIds = new Set<string>()
 
@@ -70,7 +70,7 @@ export class UaMachineryMachine {
      * HasComponent References
      */
     _components: ReferenceDescription[] = []
-    
+
     /**
      * HasAddIn References
      */
@@ -115,7 +115,7 @@ export class UaMachineryMachine {
         if (components !== null) {
             this._components = components
         }
-        await this.discoverMachine()
+        await this.discoverMetaData()
         this._lastInitialization = new Date()
     }
 
@@ -125,7 +125,7 @@ export class UaMachineryMachine {
         })
     }
 
-    async discoverMachine() {
+    async discoverMetaData() {
         await this.loadMachineIdentification()
         await this.loadMachineComponents()
         await this.loadMonitoring()

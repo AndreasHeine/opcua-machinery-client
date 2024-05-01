@@ -18,13 +18,40 @@ export class UaMachineryComponent {
 
     private session: ClientSession
     readonly nodeId: string
+
+    /**
+     * Attributes of the MachineComponent-Instance-Object e.g. DisplayName, BrowseName and Description
+     */
     attributes: Map<string, any> = new Map()
+
+    /**
+     * Additional References of the MachineComponent-Instance-Object e.g. TypeDefinition
+     */
     references: Map<string, any> = new Map()
+
+    /**
+     * A Map of all the found Identification-Properties
+     */
     identification: Map<string, any> = new Map()
 
+    /**
+     * Last known initialization Date
+     */   
     _lastInitialization = new Date()
+
+    /**
+     * A Set of known NodeId's associated with this class-instance
+     */    
     _relatedNodeIds = new Set<string>()
+
+    /**
+     * HasComponent References
+     */
     _components: ReferenceDescription[] = []
+
+    /**
+     * HasAddIn References
+     */
     _addIns: ReferenceDescription[] = []
 
     constructor(session: ClientSession, nodeId: string) {
@@ -62,7 +89,7 @@ export class UaMachineryComponent {
         if (addIns !== null) {
             this._addIns = addIns
         }
-        await this.discoverMachine()
+        await this.discoverMetaData()
         this._lastInitialization = new Date()
     }
 
@@ -107,7 +134,7 @@ export class UaMachineryComponent {
         this.references.set("TypeDefinition", (typeDefinitionReadResult.value.value as LocalizedText).text) 
     }
 
-    async discoverMachine() {
+    async discoverMetaData() {
         await this.loadMachineComponentIdentification()
     }
 

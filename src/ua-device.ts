@@ -488,14 +488,6 @@ export class OpcUaDeviceClass extends EventEmitter {
             {
                 discardOldest: true,
                 filter: constructEventFilter([
-                    "EventId",
-                    "EventType",
-                    "SourceNode",
-                    "SourceName",
-                    "Time",
-                    "ReceiveTime",
-                    "Message",
-                    "Severity",
                     "Changes"
                 ], ofType("SemanticChangeEventType")),
                 queueSize: 100000
