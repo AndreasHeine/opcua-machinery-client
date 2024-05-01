@@ -231,6 +231,7 @@ export class UaMachineryMachine {
                             const component = new UaMachineryComponent(this.session, makeNodeIdStringFromExpandedNodeId(id))
                             await component.initialize()
                             this.components.set(`${id}`, component)
+                            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
                         }
                     }
                 }
@@ -239,14 +240,40 @@ export class UaMachineryMachine {
     }
 
     async loadMonitoring() {
-        // get the NodeId from the Monitoring-Object
-        // add to _relatedNodeIds
-        // Monitoring-Object -> HasComponent -> ProcessValue-Instances
-            // check TypeDefinition
-            // add to _relatedNodeIds
-            // create ProcessValue-Class-Instance
-            // add Class-Instance to this.monitoring (Map)
-        // add ProcessValue-Class-Instance _relatedNodeIds to Subscription
+        if (this._components === null) return
+        if (this._components.length === 0) return
+        for (let index = 0; index < this._components.length; index++) {
+            const id = this._components[index].nodeId;
+            const readResult = await this.session.read({
+                nodeId: id,
+                attributeId: AttributeIds.BrowseName
+            })
+            if (readResult.statusCode.value === StatusCodes.Good.value) {
+                if ((readResult.value.value as QualifiedName).name === "Monitoring") {
+                    const monitoringBrowseResults = await this.session.browse({
+                        // nodeId?: (NodeIdLike | null);
+                        // browseDirection?: BrowseDirection;
+                        // referenceTypeId?: (NodeIdLike | null);
+                        // includeSubtypes?: UABoolean;
+                        // nodeClassMask?: UInt32;
+                        // resultMask?: UInt32;
+                        nodeId: id,
+                        browseDirection: BrowseDirection.Forward,
+                        referenceTypeId: ReferenceTypeIds.HasComponent
+                    } as BrowseDescriptionLike)
+                    if (monitoringBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                        for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
+                            // TODO check TypeDefinition!
+                            const id = monitoringBrowseResults.references![index].nodeId;
+                            const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
+                            await processValue.initialize()
+                            this.monitoring.set(`${id}`, processValue)
+                            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     toJSON() {

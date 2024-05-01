@@ -93,7 +93,7 @@ const optionsInitial: OPCUAClientOptions = {
     //      */
     //     clientName?: string;
 
-    clientName: "opcua-machinery-client",
+    clientName: `opcua-machinery-client-${new Date().valueOf()}`,
     endpointMustExist: false,
 
     requestedSessionTimeout: 30*60*1000,
