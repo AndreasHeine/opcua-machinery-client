@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-01T13:56:45.880Z",
+			"CurrentTime": "2024-05-01T16:57:10.139Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -132,44 +132,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=22;i=55228",
-					"Attributes": {
-						"DisplayName": "Channel 1",
-						"BrowseName": "22:Channel 1",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=22;i=55192",
-					"Attributes": {
-						"DisplayName": "MachineTool",
-						"BrowseName": "5:MachineTool",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=22;i=55235",
-					"Attributes": {
-						"DisplayName": "Spindle",
-						"BrowseName": "22:Spindle",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=22;i=55207",
-					"Attributes": {
-						"DisplayName": "Stacklight",
-						"BrowseName": "5:Stacklight",
-						"Description": null
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=23;i=5002",
@@ -195,44 +158,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=23;i=5011",
-					"Attributes": {
-						"DisplayName": "Channel1",
-						"BrowseName": "23:Channel1",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=23;i=5005",
-					"Attributes": {
-						"DisplayName": "MachineTool",
-						"BrowseName": "5:MachineTool",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=23;i=5013",
-					"Attributes": {
-						"DisplayName": "Spindel1",
-						"BrowseName": "23:Spindel1",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=23;i=5031",
-					"Attributes": {
-						"DisplayName": "Stacklight",
-						"BrowseName": "5:Stacklight",
-						"Description": null
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=23;i=5015",
@@ -252,17 +178,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=23;i=5018",
-					"Attributes": {
-						"DisplayName": "MachineTool",
-						"BrowseName": "5:MachineTool",
-						"Description": null
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=24;i=5015",
@@ -663,35 +579,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=39;i=5002",
-					"Attributes": {
-						"DisplayName": "Channel1",
-						"BrowseName": "39:Channel1",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=39;i=5008",
-					"Attributes": {
-						"DisplayName": "MachineTool",
-						"BrowseName": "5:MachineTool",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=39;i=5003",
-					"Attributes": {
-						"DisplayName": "Spindle1",
-						"BrowseName": "39:Spindle1",
-						"Description": null
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=40;i=5003",
@@ -714,53 +602,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=40;i=5001",
-					"Attributes": {
-						"DisplayName": "ActivityData",
-						"BrowseName": "21:ActivityData",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=40;i=5002",
-					"Attributes": {
-						"DisplayName": "ConditionData",
-						"BrowseName": "21:ConditionData",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=40;i=5015",
-					"Attributes": {
-						"DisplayName": "ConsumptionData",
-						"BrowseName": "21:ConsumptionData",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=40;i=5007",
-					"Attributes": {
-						"DisplayName": "LaserSystemStatus",
-						"BrowseName": "21:LaserSystemStatus",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=40;i=5016",
-					"Attributes": {
-						"DisplayName": "Stacklight",
-						"BrowseName": "21:Stacklight",
-						"Description": null
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=41;s=MyMachine",
@@ -792,53 +634,7 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": [
-				{
-					"NodeId": "ns=41;s=MyMachine.Monitoring.Ch1",
-					"Attributes": {
-						"DisplayName": "Ch1",
-						"BrowseName": "41:Ch1",
-						"Description": "Provides information about a machine channel"
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=41;s=MyMachine.Monitoring.MachineTool",
-					"Attributes": {
-						"DisplayName": "MachineTool",
-						"BrowseName": "5:MachineTool",
-						"Description": null
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=41;s=MyMachine.Monitoring.SP1",
-					"Attributes": {
-						"DisplayName": "SP1",
-						"BrowseName": "41:SP1",
-						"Description": "Provides information about a spindle"
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=41;s=MyMachine.Monitoring.SP2",
-					"Attributes": {
-						"DisplayName": "SP2",
-						"BrowseName": "41:SP2",
-						"Description": "Provides information about a spindle"
-					},
-					"Values": []
-				},
-				{
-					"NodeId": "ns=41;s=MyMachine.Monitoring.Stacklight",
-					"Attributes": {
-						"DisplayName": "Stacklight",
-						"BrowseName": "5:Stacklight",
-						"Description": "Contains the information about a stacklight’s composition and status."
-					},
-					"Values": []
-				}
-			]
+			"Monitoring": []
 		},
 		{
 			"NodeId": "ns=42;s=MyMachine",
@@ -859,7 +655,62 @@
 			"Components": [],
 			"MachineryItemState": null,
 			"MachineryOperationMode": null,
-			"Monitoring": []
+			"Monitoring": [
+				{
+					"NodeId": "ns=42;i=1012",
+					"Attributes": {
+						"DisplayName": "Temperature",
+						"BrowseName": "37:Temperature",
+						"Description": "Represents a process value"
+					},
+					"References": {
+						"TypeDefinition": "ProcessValueType"
+					},
+					"Values": [
+						{
+							"NodeId": "ns=42;i=1013",
+							"DisplayName": "AnalogSignal",
+							"BrowseName": "AnalogSignal",
+							"Description": "The process value.",
+							"Value": null
+						},
+						{
+							"NodeId": "ns=42;i=1016",
+							"DisplayName": "Tag",
+							"BrowseName": "SignalTag",
+							"Description": "null",
+							"Value": ""
+						}
+					]
+				},
+				{
+					"NodeId": "ns=42;i=1017",
+					"Attributes": {
+						"DisplayName": "Pressure",
+						"BrowseName": "37:Pressure",
+						"Description": "Represents a process value"
+					},
+					"References": {
+						"TypeDefinition": "ProcessValueType"
+					},
+					"Values": [
+						{
+							"NodeId": "ns=42;i=1018",
+							"DisplayName": "AnalogSignal",
+							"BrowseName": "AnalogSignal",
+							"Description": "The process value.",
+							"Value": null
+						},
+						{
+							"NodeId": "ns=42;i=1021",
+							"DisplayName": "Tag",
+							"BrowseName": "SignalTag",
+							"Description": "null",
+							"Value": ""
+						}
+					]
+				}
+			]
 		}
 	]
 }

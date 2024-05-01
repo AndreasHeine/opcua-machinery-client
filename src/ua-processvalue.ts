@@ -1,12 +1,17 @@
 import { 
     AttributeIds, 
+    BrowseDescriptionLike, 
+    BrowseDirection, 
     ClientSession, 
     DataValue, 
     LocalizedText, 
     QualifiedName, 
     ReadValueIdOptions, 
+    ReferenceTypeIds, 
     StatusCodes 
 } from "node-opcua";
+import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
+import assert from "assert";
 
 export class dataStoreItem {
 
@@ -33,7 +38,7 @@ export class dataStoreItem {
             DisplayName: this.displayName,
             BrowseName: this.browseName,
             Description: this.description,
-            Value: this.value.toJSON()
+            Value: this.value.value.value
         }
     }
 }
@@ -47,6 +52,11 @@ export class UaProcessValue {
      * Attributes of the Machine-Instance-Object e.g. DisplayName, BrowseName and Description
      */
     attributes: Map<string, any> = new Map()
+
+    /**
+     * Additional References of the Machine-Instance-Object e.g. TypeDefinition
+     */
+    references: Map<string, any> = new Map()
 
     /**
      * A Set of known NodeId's associated with this class-instance
@@ -92,10 +102,120 @@ export class UaProcessValue {
     }
 
     async discoverMetaData() {
+        const browseResult = await this.session!.browse({
+            // nodeId?: (NodeIdLike | null);
+            // browseDirection?: BrowseDirection;
+            // referenceTypeId?: (NodeIdLike | null);
+            // includeSubtypes?: UABoolean;
+            // nodeClassMask?: UInt32;
+            // resultMask?: UInt32;
+            nodeId: this.nodeId,
+            browseDirection: BrowseDirection.Forward,
+            referenceTypeId: ReferenceTypeIds.HasTypeDefinition
+        } as BrowseDescriptionLike)
+        if (browseResult.references!.length > 1) {
+            console.warn(`ProcessValue-Instance '${this.nodeId}' has more then one TypeDefinition-Reference!`)
+        }
+        const typeNodeId = makeNodeIdStringFromExpandedNodeId(browseResult.references![0].nodeId)
+        this._relatedNodeIds.add(typeNodeId)
+        const typeDefinitionReadResult: DataValue = await this.session.read({
+            nodeId: browseResult.references![0].nodeId,
+            attributeId: AttributeIds.DisplayName
+        })
+        this.references.set("TypeDefinition", (typeDefinitionReadResult.value.value as LocalizedText).text) 
+        assert(`${(typeDefinitionReadResult.value.value as LocalizedText).text}` === "ProcessValueType")
         // AnalogSignal
-            // EURange
-            // EngeneeringUnits
+        const processValueBrowseResults = await this.session.browse({
+            // nodeId?: (NodeIdLike | null);
+            // browseDirection?: BrowseDirection;
+            // referenceTypeId?: (NodeIdLike | null);
+            // includeSubtypes?: UABoolean;
+            // nodeClassMask?: UInt32;
+            // resultMask?: UInt32;
+            nodeId: this.nodeId,
+            browseDirection: BrowseDirection.Forward,
+            referenceTypeId: ReferenceTypeIds.HasComponent
+        } as BrowseDescriptionLike)
+        if (processValueBrowseResults.statusCode.value === StatusCodes.Good.value) {
+            for (let index = 0; index < processValueBrowseResults.references!.length; index++) {
+                // TODO check TypeDefinition!
+                const id = makeNodeIdStringFromExpandedNodeId(processValueBrowseResults.references![index].nodeId)
+                const readResults = await this.session.read([
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.Value
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.DisplayName
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.BrowseName
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.Description
+                    } as ReadValueIdOptions
+                ])
+                const dataItem = new dataStoreItem(
+                    id,
+                    `${(readResults[1].value.value as LocalizedText).text}`,
+                    `${(readResults[2].value.value as QualifiedName).name}`,
+                    `${(readResults[3].value.value as LocalizedText).text}`,
+                )
+                dataItem.updateValue(readResults[0])
+                this._relatedNodeIds.add(id)
+                this._dataStore.set(id, dataItem)
+            }
+            // Range
+            // EngeneeringUnit
+        }
         // Tag
+        const processValueBrowseResults2 = await this.session.browse({
+            // nodeId?: (NodeIdLike | null);
+            // browseDirection?: BrowseDirection;
+            // referenceTypeId?: (NodeIdLike | null);
+            // includeSubtypes?: UABoolean;
+            // nodeClassMask?: UInt32;
+            // resultMask?: UInt32;
+            nodeId: this.nodeId,
+            browseDirection: BrowseDirection.Forward,
+            referenceTypeId: ReferenceTypeIds.HasProperty
+        } as BrowseDescriptionLike)
+        if (processValueBrowseResults2.statusCode.value === StatusCodes.Good.value) {
+            for (let index = 0; index < processValueBrowseResults2.references!.length; index++) {
+                // TODO check TypeDefinition!
+                const id = makeNodeIdStringFromExpandedNodeId(processValueBrowseResults2.references![index].nodeId)
+                const readResults = await this.session.read([
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.Value
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.DisplayName
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.BrowseName
+                    } as ReadValueIdOptions,
+                    {
+                        nodeId: id,
+                        attributeId: AttributeIds.Description
+                    } as ReadValueIdOptions
+                ])
+                const dataItem = new dataStoreItem(
+                    id,
+                    `${(readResults[1].value.value as LocalizedText).text}`,
+                    `${(readResults[2].value.value as QualifiedName).name}`,
+                    `${(readResults[3].value.value as LocalizedText).text}`,
+                )
+                dataItem.updateValue(readResults[0])
+                this._relatedNodeIds.add(id)
+                this._dataStore.set(id, dataItem)
+            }
+        }
     }
 
     notify(nodeId: string, dataValue: DataValue) {
@@ -110,6 +230,7 @@ export class UaProcessValue {
         return {
             NodeId: this.nodeId,
             Attributes: Object.fromEntries(this.attributes.entries()),
+            References: Object.fromEntries(this.references.entries()),
             Values: Array.from(this._dataStore.values()).map((c) => {return c.toJSON()})
         }
     }

@@ -144,7 +144,7 @@ export class UaMachineryMachine {
             referenceTypeId: ReferenceTypeIds.HasTypeDefinition
         } as BrowseDescriptionLike)
         if (browseResult.references!.length > 1) {
-            console.warn(`Machine-Instance '${this.nodeId}' as more then one TypeDefinition-Reference!`)
+            console.warn(`Machine-Instance '${this.nodeId}' has more then one TypeDefinition-Reference!`)
         }
         this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(browseResult.references![0].nodeId))
         const typeDefinitionReadResult: DataValue = await this.session.read({
@@ -307,10 +307,39 @@ export class UaMachineryMachine {
                         for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
                             // TODO check TypeDefinition!
                             const id = monitoringBrowseResults.references![index].nodeId;
-                            const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
-                            await processValue.initialize()
-                            this.monitoring.set(`${id}`, processValue)
-                            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
+                            try {
+                                const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
+                                await processValue.initialize()
+                                this.monitoring.set(`${id}`, processValue)
+                                this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
+                            } catch (error) {
+                                
+                            }
+                        }
+                    }
+                    const monitoringBrowseResults2 = await this.session.browse({
+                        // nodeId?: (NodeIdLike | null);
+                        // browseDirection?: BrowseDirection;
+                        // referenceTypeId?: (NodeIdLike | null);
+                        // includeSubtypes?: UABoolean;
+                        // nodeClassMask?: UInt32;
+                        // resultMask?: UInt32;
+                        nodeId: id,
+                        browseDirection: BrowseDirection.Forward,
+                        referenceTypeId: ReferenceTypeIds.Organizes
+                    } as BrowseDescriptionLike)
+                    if (monitoringBrowseResults2.statusCode.value === StatusCodes.Good.value) {
+                        for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
+                            // TODO check TypeDefinition!
+                            const id = monitoringBrowseResults2.references![index].nodeId;
+                            try {
+                                const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
+                                await processValue.initialize()
+                                this.monitoring.set(`${id}`, processValue)
+                                this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
+                            } catch (error) {
+                                
+                            }
                         }
                     }
                 }

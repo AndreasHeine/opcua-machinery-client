@@ -124,7 +124,7 @@ export class UaMachineryComponent {
             referenceTypeId: ReferenceTypeIds.HasTypeDefinition
         } as BrowseDescriptionLike)
         if (browseResult.references!.length > 1) {
-            console.warn(`Machine-Instance '${this.nodeId}' as more then one TypeDefinition-Reference!`)
+            console.warn(`MachineComponent-Instance '${this.nodeId}' has more then one TypeDefinition-Reference!`)
         }
         this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(browseResult.references![0].nodeId))
         const typeDefinitionReadResult: DataValue = await this.session.read({
