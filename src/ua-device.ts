@@ -31,6 +31,7 @@ import {
 import { writeJson } from 'fs-extra';
 import { UaMachineryMachine } from './ua-machine';
 import { UaMachineryComponent } from './ua-machine-component';
+import { UaProcessValue } from './ua-processvalue';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -135,7 +136,7 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private session: ClientSession | undefined
     private subscription: ClientSubscription | undefined
-    private monitoredItemMap: Map<string, ClientMonitoredItem> = new Map()
+    private monitoredItemValueMap: Map<string, ClientMonitoredItem> = new Map()
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
@@ -146,7 +147,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private machines: Map<string, any> = new Map()
     private summery = Object.create({})
     private _reinitializing: boolean = false
-    private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent> = new Map()
+    private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent | UaProcessValue> = new Map()
     private _initialized = false
     private _queuedBaseModelChangeEvents: Variant[][] = []
     private _queuedGeneralModelChangeEvents: Variant[][] = []
@@ -271,8 +272,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
             console.log(`OPC UA Client: MonitoredItem has been added to Subscription! monitoredItem='${monitoredItem}'`)
             if (monitoredItem.itemToMonitor.attributeId.valueOf() !== AttributeIds.Value) return
-            console.log(`OPC UA Client: adding monitored item to map! [${Array.from(this.monitoredItemMap.keys())}]`)
-            this.monitoredItemMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
+            console.log(`OPC UA Client: adding monitored item to map! [${Array.from(this.monitoredItemValueMap.keys())}]`)
+            this.monitoredItemValueMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
                 Array.from(this.machines.values()).map((machine)  => {
                     machine.notify(monitoredItem.itemToMonitor.nodeId.toString(), dataValue)
@@ -341,6 +342,21 @@ export class OpcUaDeviceClass extends EventEmitter {
         await this.findMachinesOnServer()
         await this.discoverFoundMachines()
 
+        this.collectRelatedNodeIds()
+
+        this._initialized = true
+
+        if (
+            this._queuedBaseModelChangeEvents.length > 0 ||
+            this._queuedGeneralModelChangeEvents.length > 0 ||
+            this._queuedSemanticChangeEvents.length > 0
+        ) {
+            await this.processQueuedChangeEvents()
+        }
+    }
+
+    collectRelatedNodeIds() {
+        this._relatedNodeIdMap.clear()
         const machines = Array.from(this.machines.values())
         for (let index = 0; index < machines.length; index++) {
             const machine = machines[index] as UaMachineryMachine
@@ -354,20 +370,17 @@ export class OpcUaDeviceClass extends EventEmitter {
                     this._relatedNodeIdMap.set(nodeId, component)
                 })
             }
+            const processValues: UaProcessValue[] = Array.from(machine.monitoring.values())
+            for (let index = 0; index < processValues.length; index++) {
+                const processValue = processValues[index];
+                processValue._relatedNodeIds.forEach((nodeId) => {
+                    this._relatedNodeIdMap.set(nodeId, processValue)
+                })
+            }
         }
 
         const relatedNodes = Array.from(this._relatedNodeIdMap.keys())
         console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's [${relatedNodes}]`)
-
-        this._initialized = true
-
-        if (
-            this._queuedBaseModelChangeEvents.length > 0 ||
-            this._queuedGeneralModelChangeEvents.length > 0 ||
-            this._queuedSemanticChangeEvents.length > 0
-        ) {
-            await this.processQueuedChangeEvents()
-        }
     }
 
     async processQueuedChangeEvents() {
@@ -505,7 +518,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             const variant = values[index];
             if (Array.isArray(variant.value)) {
                 const changes = variant.value
-                const toBeInitialized = new Set<UaMachineryMachine | UaMachineryComponent>()
+                const toBeInitialized = new Set<UaMachineryMachine | UaMachineryComponent | UaProcessValue>()
                 for (let index = 0; index < changes.length; index++) {
                     const change = changes[index];
                     const nodeId = change.affected.toString()
@@ -523,6 +536,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
             }
         }
+        this.collectRelatedNodeIds()
     }
 
     private async readServerState() {
