@@ -97,7 +97,8 @@ const optionsInitial: OPCUAClientOptions = {
     endpointMustExist: false,
 
     requestedSessionTimeout: 30*60*1000,
-    keepSessionAlive: false,
+    keepSessionAlive: true,
+    keepPendingSessionsOnDisconnect: false,
 
     transportTimeout: 10000,
     connectionStrategy: {
