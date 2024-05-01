@@ -20,9 +20,6 @@ import {
     BrowseDescriptionLike,
     BrowseDirection,
     ReferenceTypeIds,
-    ReadValueIdOptions,
-    MonitoringParametersOptions,
-    MonitoringMode,
     Variant,
     ChannelSecurityToken,
     NotificationMessage,
@@ -95,10 +92,14 @@ const optionsInitial: OPCUAClientOptions = {
     //      * a client name string that will be used to generate session names.
     //      */
     //     clientName?: string;
+
     clientName: "opcua-machinery-client",
-    requestedSessionTimeout: 30*60*1000,
     endpointMustExist: false,
+
+    requestedSessionTimeout: 30*60*1000,
     keepSessionAlive: false,
+
+    transportTimeout: 10000,
     connectionStrategy: {
         initialDelay: 1000,
         maxDelay: 5000,
@@ -244,6 +245,7 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private async createSubscription() {
         this.subscription = await this.session!.createSubscription2(createSubscriptionRequest)
+        console.log(`OPC UA Client: Subscription created maxKeepAliveCount='${this.subscription.maxKeepAliveCount}' lifetimeCount='${this.subscription.lifetimeCount}'`)
         this.subscription.on("status_changed", (status: StatusCode, diagnosticInfo: DiagnosticInfo) => {
             console.log(`OPC UA Client: Subscription status_changed! status='${status}' diagnosticInfo='${diagnosticInfo}'`)
         })
@@ -267,6 +269,8 @@ export class OpcUaDeviceClass extends EventEmitter {
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
             console.log(`OPC UA Client: MonitoredItem has been added to Subscription! monitoredItem='${monitoredItem}'`)
+            if (monitoredItem.itemToMonitor.attributeId.valueOf() !== AttributeIds.Value) return
+            console.log(`OPC UA Client: adding monitored item to map! [${Array.from(this.monitoredItemMap.keys())}]`)
             this.monitoredItemMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
                 Array.from(this.machines.values()).map((machine)  => {
@@ -274,30 +278,6 @@ export class OpcUaDeviceClass extends EventEmitter {
                 })
             })
         })
-
-        const serverTimeNodeId = "i=2258"
-        await this.subscription.monitor(
-            {
-                // nodeId?: (NodeIdLike | null);
-                // attributeId?: UInt32;
-                // indexRange?: NumericRange;
-                // dataEncoding?: (QualifiedNameLike | null);
-                nodeId: serverTimeNodeId,
-                attributeId: AttributeIds.Value
-            } as ReadValueIdOptions,
-            {
-                // clientHandle?: UInt32;
-                // samplingInterval?: Double;
-                // filter?: (ExtensionObject | null);
-                // queueSize?: UInt32;
-                // discardOldest?: UABoolean;
-                samplingInterval: 10000,
-                queueSize: 1,
-                discardOldest: false
-            } as MonitoringParametersOptions,
-            TimestampsToReturn.Both,
-            MonitoringMode.Reporting
-        )
     }
 
     async initialize() {
