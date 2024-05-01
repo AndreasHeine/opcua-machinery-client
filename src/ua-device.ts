@@ -24,7 +24,6 @@ import {
     ChannelSecurityToken,
     NotificationMessage,
     ReadValueIdOptions,
-    MonitoringMode,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -272,9 +271,8 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: Subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
-            console.log(`OPC UA Client: MonitoredItem has been added to Subscription! monitoredItem='${monitoredItem}'`)
+            console.log(`OPC UA Client: MonitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to Subscription!`)
             if (monitoredItem.itemToMonitor.attributeId.valueOf() !== AttributeIds.Value) return
-            console.log(`OPC UA Client: adding monitored item to map! [${Array.from(this.monitoredItemValueMap.keys())}]`)
             this.monitoredItemValueMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
                 Array.from(this.machines.values()).map((machine)  => {
@@ -347,25 +345,19 @@ export class OpcUaDeviceClass extends EventEmitter {
         this.collectRelatedNodeIds()
 
         // TODO only add Variables and Properties
-        const items = Array.from(this._relatedNodeIdMap.keys()).map((id) => {
-            return {
-                nodeId: id,
-                attributeId: AttributeIds.Value,
-            } as ReadValueIdOptions
-        })
-        for (let index = 0; index < items.length; index++) {
-            const item = items[index];
-            await this.subscription!.monitor(
-                item, 
-                {
-                    samplingInterval: 2000,
-                    queueSize: 1000
-                }, 
-                TimestampsToReturn.Both, 
-                MonitoringMode.Reporting
-            )
-        }
-
+        await this.subscription!.monitorItems(
+            Array.from(this._relatedNodeIdMap.keys()).map((id) => {
+                return {
+                    nodeId: id,
+                    attributeId: AttributeIds.Value,
+                } as ReadValueIdOptions
+            }), 
+            {
+                samplingInterval: 2000,
+                queueSize: 1000
+            }, 
+            TimestampsToReturn.Both
+        )
 
         this._initialized = true
 

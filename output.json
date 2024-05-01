@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-01T18:31:36.388Z",
+			"CurrentTime": "2024-05-01T19:20:34.370Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
