@@ -23,6 +23,8 @@ import {
     Variant,
     ChannelSecurityToken,
     NotificationMessage,
+    ReadValueIdOptions,
+    MonitoringMode,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -344,6 +346,27 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         this.collectRelatedNodeIds()
 
+        // TODO only add Variables and Properties
+        const items = Array.from(this._relatedNodeIdMap.keys()).map((id) => {
+            return {
+                nodeId: id,
+                attributeId: AttributeIds.Value,
+            } as ReadValueIdOptions
+        })
+        for (let index = 0; index < items.length; index++) {
+            const item = items[index];
+            await this.subscription!.monitor(
+                item, 
+                {
+                    samplingInterval: 2000,
+                    queueSize: 1000
+                }, 
+                TimestampsToReturn.Both, 
+                MonitoringMode.Reporting
+            )
+        }
+
+
         this._initialized = true
 
         if (
@@ -651,9 +674,12 @@ export class OpcUaDeviceClass extends EventEmitter {
             this.machines.set(`${machineNodeId}`, uaMachine)
         }
         this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
-        // console.log(JSON.stringify(this._summery, null, '\t'))
         writeJson("output.json", this.summery, {spaces: '\t'})
         console.log("OPC UA Client: 'output.json' created!")
+
+        setInterval(() => {
+            this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
+        }, 10000)
     }
 
     private async findMachinesOnServer() {

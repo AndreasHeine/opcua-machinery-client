@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-01T16:57:10.139Z",
+			"CurrentTime": "2024-05-01T18:31:36.388Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -666,18 +666,18 @@
 					"References": {
 						"TypeDefinition": "ProcessValueType"
 					},
-					"Values": [
+					"Variables": [
 						{
 							"NodeId": "ns=42;i=1013",
 							"DisplayName": "AnalogSignal",
-							"BrowseName": "AnalogSignal",
+							"BrowseName": "36:AnalogSignal",
 							"Description": "The process value.",
 							"Value": null
 						},
 						{
 							"NodeId": "ns=42;i=1016",
 							"DisplayName": "Tag",
-							"BrowseName": "SignalTag",
+							"BrowseName": "36:SignalTag",
 							"Description": "null",
 							"Value": ""
 						}
@@ -693,18 +693,18 @@
 					"References": {
 						"TypeDefinition": "ProcessValueType"
 					},
-					"Values": [
+					"Variables": [
 						{
 							"NodeId": "ns=42;i=1018",
 							"DisplayName": "AnalogSignal",
-							"BrowseName": "AnalogSignal",
+							"BrowseName": "36:AnalogSignal",
 							"Description": "The process value.",
 							"Value": null
 						},
 						{
 							"NodeId": "ns=42;i=1021",
 							"DisplayName": "Tag",
-							"BrowseName": "SignalTag",
+							"BrowseName": "36:SignalTag",
 							"Description": "null",
 							"Value": ""
 						}

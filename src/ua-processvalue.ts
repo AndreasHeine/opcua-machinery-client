@@ -161,7 +161,7 @@ export class UaProcessValue {
                 const dataItem = new dataStoreItem(
                     id,
                     `${(readResults[1].value.value as LocalizedText).text}`,
-                    `${(readResults[2].value.value as QualifiedName).name}`,
+                    `${(readResults[2].value.value as QualifiedName).toString()}`,
                     `${(readResults[3].value.value as LocalizedText).text}`,
                 )
                 dataItem.updateValue(readResults[0])
@@ -208,7 +208,7 @@ export class UaProcessValue {
                 const dataItem = new dataStoreItem(
                     id,
                     `${(readResults[1].value.value as LocalizedText).text}`,
-                    `${(readResults[2].value.value as QualifiedName).name}`,
+                    `${(readResults[2].value.value as QualifiedName).toString()}`,
                     `${(readResults[3].value.value as LocalizedText).text}`,
                 )
                 dataItem.updateValue(readResults[0])
@@ -231,7 +231,7 @@ export class UaProcessValue {
             NodeId: this.nodeId,
             Attributes: Object.fromEntries(this.attributes.entries()),
             References: Object.fromEntries(this.references.entries()),
-            Values: Array.from(this._dataStore.values()).map((c) => {return c.toJSON()})
+            Variables: Array.from(this._dataStore.values()).map((c) => {return c.toJSON()})
         }
     }
 }
