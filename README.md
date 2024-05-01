@@ -4,6 +4,8 @@
 
 The opcua-machinery-client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components and their ComponentIdentification. At the end an output.json will be created with the collected results of the OPC UA Server!
 
+The opcua-machinery-client is aware of modelchanges due to "ModelChangeEvents" and partially reinitializes the related Item (Machine-, MachineComponent- or ProcessValue-Instance)!
+
 ### Roadmap [done: :heavy_check_mark:, not yet: :x:]:
 
 #### OPC 40001-1: Machinery Basic Building Blocks (https://reference.opcfoundation.org/Machinery/v103/docs/5)
