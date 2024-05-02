@@ -716,10 +716,10 @@ export class OpcUaDeviceClass extends EventEmitter {
         }
 
         this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
-        await writeJson("output.json", this.summery, {spaces: '\t'})
+        await writeJson("output.json", this.summery, {spaces: '    '})
 
         setInterval(async () => {
-            await writeJson("output.json", this.summery, {spaces: '\t'})
+            await writeJson("output.json", this.summery, {spaces: '    '})
             console.log("OPC UA Client: 'output.json' got updated!")
             this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         }, 10000)
