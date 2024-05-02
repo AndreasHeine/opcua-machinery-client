@@ -129,6 +129,7 @@ export class UaMachineryMachine {
         await this.loadMachineIdentification()
         await this.loadMachineComponents()
         await this.loadMonitoring()
+        await this.loadBuildingBlocks()
     }
 
     async loadMachineTypeDefinition() {
@@ -339,6 +340,89 @@ export class UaMachineryMachine {
                                 this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
                             } catch (error) {
                                 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    async loadBuildingBlocks() {
+        if (this._components === null) return
+        if (this._components.length === 0) return
+        for (let index = 0; index < this._components.length; index++) {
+            const componentId = this._components[index].nodeId;
+            const readResult = await this.session.read({
+                nodeId: componentId,
+                attributeId: AttributeIds.BrowseName
+            })
+            if (readResult.statusCode.value === StatusCodes.Good.value) {
+                if ((readResult.value.value as QualifiedName).name === "MachineryBuildingBlocks") {
+                    const blocksBrowseResults = await this.session.browse({
+                        // nodeId?: (NodeIdLike | null);
+                        // browseDirection?: BrowseDirection;
+                        // referenceTypeId?: (NodeIdLike | null);
+                        // includeSubtypes?: UABoolean;
+                        // nodeClassMask?: UInt32;
+                        // resultMask?: UInt32;
+                        nodeId: componentId,
+                        browseDirection: BrowseDirection.Forward,
+                        referenceTypeId: ReferenceTypeIds.HasAddIn
+                    } as BrowseDescriptionLike)
+                    if (blocksBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                        for (let index = 0; index < blocksBrowseResults.references!.length; index++) {
+                            // TODO check TypeDefinition!
+                            const addinId = blocksBrowseResults.references![index].nodeId;
+                            const typeDefinitionBrowseResult = await this.session!.browse({
+                                // nodeId?: (NodeIdLike | null);
+                                // browseDirection?: BrowseDirection;
+                                // referenceTypeId?: (NodeIdLike | null);
+                                // includeSubtypes?: UABoolean;
+                                // nodeClassMask?: UInt32;
+                                // resultMask?: UInt32;
+                                nodeId: addinId,
+                                browseDirection: BrowseDirection.Forward,
+                                referenceTypeId: ReferenceTypeIds.HasTypeDefinition
+                            } as BrowseDescriptionLike)
+                            if (typeDefinitionBrowseResult.references!.length > 1) {
+                                console.warn(`Machine-Instance '${this.nodeId}' has more then one TypeDefinition-Reference!`)
+                            }
+                            this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(typeDefinitionBrowseResult.references![0].nodeId))
+                            const typeDefinitionReadResult: DataValue = await this.session.read({
+                                nodeId: typeDefinitionBrowseResult.references![0].nodeId,
+                                attributeId: AttributeIds.DisplayName
+                            })
+                            const stateMachineBrowseResults = await this.session.browse({
+                                // nodeId?: (NodeIdLike | null);
+                                // browseDirection?: BrowseDirection;
+                                // referenceTypeId?: (NodeIdLike | null);
+                                // includeSubtypes?: UABoolean;
+                                // nodeClassMask?: UInt32;
+                                // resultMask?: UInt32;
+                                nodeId: addinId,
+                                browseDirection: BrowseDirection.Forward,
+                                referenceTypeId: ReferenceTypeIds.HasComponent
+                            } as BrowseDescriptionLike)
+                            if (stateMachineBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                                for (let index = 0; index < stateMachineBrowseResults.references!.length; index++) {
+                                    // TODO check displayname for "CurrentState"
+                                    const readResult: DataValue = await this.session.read({
+                                        nodeId: stateMachineBrowseResults.references![index].nodeId,
+                                        attributeId: AttributeIds.Value
+                                    })
+                                    this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(stateMachineBrowseResults.references![index].nodeId))
+                                    switch ((typeDefinitionReadResult.value.value as LocalizedText).text) {
+                                        case "MachineryItemState_StateMachineType":
+                                            this.itemState = (readResult.value.value as LocalizedText).text
+                                            break;
+                                        case "MachineryOperationModeStateMachineType":
+                                            this.operationMode = (readResult.value.value as LocalizedText).text
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
                             }
                         }
                     }

@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-01T19:20:34.370Z",
+			"CurrentTime": "2024-05-02T06:58:28.138Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -383,7 +383,7 @@
 			},
 			"Components": [],
 			"MachineryItemState": null,
-			"MachineryOperationMode": null,
+			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
 		{
@@ -476,7 +476,7 @@
 			},
 			"Components": [],
 			"MachineryItemState": null,
-			"MachineryOperationMode": null,
+			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
 		{
@@ -500,7 +500,7 @@
 			},
 			"Components": [],
 			"MachineryItemState": null,
-			"MachineryOperationMode": null,
+			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
 		{
@@ -600,8 +600,8 @@
 				"YearOfConstruction": 2023
 			},
 			"Components": [],
-			"MachineryItemState": null,
-			"MachineryOperationMode": null,
+			"MachineryItemState": "Executing",
+			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
 		{
@@ -632,7 +632,7 @@
 				"YearOfConstruction": 2022
 			},
 			"Components": [],
-			"MachineryItemState": null,
+			"MachineryItemState": "Executing",
 			"MachineryOperationMode": null,
 			"Monitoring": []
 		},

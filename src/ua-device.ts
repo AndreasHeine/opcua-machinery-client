@@ -159,13 +159,13 @@ export class OpcUaDeviceClass extends EventEmitter {
         this.endpoint = endpoint
         this.client = OPCUAClient.create(optionsInitial)
         this.client.on("backoff", (retry: number, delay: number) => {
-            console.warn(`OPC UA Client: Unable to connect to the OPC UA Device @ '${endpoint}' - attempt '${retry}' retrying in '${delay / 1000.0}' seconds`)
+            console.warn(`OPC UA Client: unable to connect to the OPC UA Device @ '${endpoint}' - attempt '${retry}' retrying in '${delay / 1000.0}' seconds`)
         });
         this.client.on("connected", () => {
-            console.log(`OPC UA Client: Connected to OPC UA Device @ '${endpoint}'`)
+            console.log(`OPC UA Client: connected to OPC UA Device @ '${endpoint}'`)
         })
         this.client.on("after_reconnection", async () => {
-            console.log(`OPC UA Client: Reconnected to OPC UA Device @ '${endpoint}'`)
+            console.log(`OPC UA Client: reconnected to OPC UA Device @ '${endpoint}'`)
         })
         this.client.on("reconnection_attempt_has_failed", (err: Error, message: string) => {
             console.error(`OPC UA Client: reconnect attemp has failed! err='${err}' message='${message}'`)
@@ -248,30 +248,30 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private async createSubscription() {
         this.subscription = await this.session!.createSubscription2(createSubscriptionRequest)
-        console.log(`OPC UA Client: Subscription created maxKeepAliveCount='${this.subscription.maxKeepAliveCount}' lifetimeCount='${this.subscription.lifetimeCount}'`)
+        console.log(`OPC UA Client: subscription created maxKeepAliveCount='${this.subscription.maxKeepAliveCount}' lifetimeCount='${this.subscription.lifetimeCount}'`)
         this.subscription.on("status_changed", (status: StatusCode, diagnosticInfo: DiagnosticInfo) => {
-            console.log(`OPC UA Client: Subscription status_changed! status='${status}' diagnosticInfo='${diagnosticInfo}'`)
+            console.log(`OPC UA Client: subscription status_changed! status='${status}' diagnosticInfo='${diagnosticInfo}'`)
         })
         this.subscription.on("terminated", () => {
-            console.warn(`OPC UA Client: Subscription terminated!`)
+            console.warn(`OPC UA Client: subscription terminated!`)
         })
         this.subscription.on("keepalive", () => {
-            console.log(`OPC UA Client: Subscription keepalive!`)
+            console.log(`OPC UA Client: subscription keepalive!`)
         })
         this.subscription.on("error", (err: Error) => {
-            console.error(`OPC UA Client: Subscription error! err='${err}'`)
+            console.error(`OPC UA Client: subscription error! err='${err}'`)
         })
         this.subscription.on("internal_error", (err: Error) => {
-            console.error(`OPC UA Client: Subscription internal_error! err='${err}'`)
+            console.error(`OPC UA Client: subscription internal_error! err='${err}'`)
         })
         this.subscription.on("started", (subscriptionId: number) => {
-            console.log(`OPC UA Client: Subscription started! subscriptionId='${subscriptionId}'`)
+            console.log(`OPC UA Client: subscription started! subscriptionId='${subscriptionId}'`)
         })
         this.subscription.on("received_notifications", (notificationMessage: NotificationMessage) => {
-            console.log(`OPC UA Client: Subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
+            console.log(`OPC UA Client: subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
-            console.log(`OPC UA Client: MonitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to Subscription!`)
+            console.log(`OPC UA Client: monitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to the Subscription!`)
             if (monitoredItem.itemToMonitor.attributeId.valueOf() !== AttributeIds.Value) return
             this.monitoredItemValueMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
@@ -395,7 +395,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         }
 
         const relatedNodes = Array.from(this._relatedNodeIdMap.keys())
-        console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's [${relatedNodes}]`)
+        console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's`)
     }
 
     async processQueuedChangeEvents() {
@@ -521,6 +521,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async processGeneralModelChangeEvent(values: Variant[]) {
+        let changesOccurs = false
         for (let index = 0; index < values.length; index++) {
             const variant = values[index];
             if (Array.isArray(variant.value)) {
@@ -536,6 +537,9 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
                 // creating a set should remove duplicates
                 const arr = Array.from(toBeInitialized)
+                if (arr.length > 0) {
+                    changesOccurs = true
+                }
                 for (let index = 0; index < arr.length; index++) {
                     const item = arr[index];
                     console.log(`OPC UA Client: reinitializing item with nodeId='${item.nodeId}' class='${item.constructor.name}'`)
@@ -543,7 +547,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
             }
         }
-        this.collectRelatedNodeIds()
+        if (changesOccurs === true) this.collectRelatedNodeIds()
     }
 
     private async readServerState() {
@@ -638,7 +642,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         if (isStatusCodeGoodish(readResults[5].statusCode)) this.deviceLimits.set("MaxNodesPerTranslateBrowsePathsToNodeIds", readResults[5].value.value)
         if (isStatusCodeGoodish(readResults[6].statusCode)) this.deviceLimits.set("MaxNodesPerWrite", readResults[6].value.value)
 
-        console.log(`OPC UA Client: UaDeviceLimits -> '${JSON.stringify(Object.fromEntries(this.deviceLimits.entries()), null, "\t")}'`)
+        console.log(`OPC UA Client: UaDeviceLimits '${JSON.stringify(Object.fromEntries(this.deviceLimits.entries()), null, "\t")}'`)
     }
 
     private async readServerProfileArray() {
@@ -660,7 +664,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private async discoverFoundMachines() {
         for (let index = 0; index < this.foundMachines.length; index++) {
             const machineNodeId = this.foundMachines[index]
-            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${this.foundMachines.length}] -> id='${machineNodeId}'`)
+            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${this.foundMachines.length}] with id='${machineNodeId}'`)
             const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
@@ -692,7 +696,7 @@ export class OpcUaDeviceClass extends EventEmitter {
         browseResult.references!.forEach((result) => {
             this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
         })
-        console.log(`OPC UA Client: found '${this.foundMachines.length}' machine instances -> [${this.foundMachines}]`)
+        console.log(`OPC UA Client: found '${this.foundMachines.length}' machine instances!`)
         // console.log(JSON.stringify(this._summery, null, '\t'))
     }
 }
