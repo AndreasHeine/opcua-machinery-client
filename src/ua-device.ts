@@ -435,10 +435,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 })
             }
         }
-
-        const relatedVariables = this._relatedVariableNodeIds
-        console.log(relatedVariables)
-        console.log(`OPC UA Client: contains '${relatedVariables.size}' related Variable/Property-NodeId's`)
+        console.log(`OPC UA Client: contains '${this._relatedVariableNodeIds.size}' related Variable/Property-NodeId's`)
     }
 
     async processQueuedChangeEvents() {
