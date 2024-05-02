@@ -535,7 +535,6 @@ export class OpcUaDeviceClass extends EventEmitter {
                         toBeInitialized.add(item)
                     }
                 }
-                // creating a set should remove duplicates
                 const arr = Array.from(toBeInitialized)
                 if (arr.length > 0) {
                     changesOccurs = true
@@ -556,7 +555,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2259",
             attributeId: AttributeIds.Value
         })
-        // check statuscode!
+        // TODO check statuscode!
         this.serverState = dv?.value.value
         console.log(`OPC UA Client: read i=2259 [Server_ServerStatus_State] Value '${this.serverState}' StatusCode '${dv.statusCode.name}'`)
     }
@@ -567,7 +566,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2256",
             attributeId: AttributeIds.Value
         })
-        // check statuscode!
+        // TODO check statuscode!
         this.serverStatus = dv?.value.value
         console.log(`OPC UA Client: read i=2256 [Server_ServerStatus] Value '${JSON.stringify(this.serverStatus)}' StatusCode '${dv.statusCode.name}'`)
     }
@@ -578,7 +577,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2267",
             attributeId: AttributeIds.Value
         })
-        // check statuscode!
+        // TODO check statuscode!
         this.serviceLevel = dv!.value.value
         console.log(`OPC UA Client: read i=2267 [Server_ServiceLevel] Value '${this.serviceLevel}' StatusCode '${dv.statusCode.name}'`)
     }
@@ -589,7 +588,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2255",
             attributeId: AttributeIds.Value
         })
-        // check statuscode!
+        // TODO check statuscode!
         this.namespaceArray = dv!.value.value
         console.log(`OPC UA Client: read i=2255 [Server_NamespaceArray] Value '[${this.namespaceArray}]' StatusCode '${dv.statusCode.name}'`)
     }
@@ -651,7 +650,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2269",
             attributeId: AttributeIds.Value
         })
-        // check statuscode!
+        // TODO check statuscode!
         this.serverProfileArray = dv!.value.value
         console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${this.serverProfileArray}]' StatusCode '${dv.statusCode.name}'`)
     }   
@@ -669,7 +668,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
         }
-        
+
         this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         await writeJson("output.json", this.summery, {spaces: '\t'})
 
@@ -699,6 +698,5 @@ export class OpcUaDeviceClass extends EventEmitter {
             this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
         })
         console.log(`OPC UA Client: found '${this.foundMachines.length}' machine instances!`)
-        // console.log(JSON.stringify(this._summery, null, '\t'))
     }
 }
