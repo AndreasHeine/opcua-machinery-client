@@ -588,7 +588,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         }
         if (changesOccurs === true) {
             this.collectRelatedNodeIds()
+            // const oldVariableNodeIds = this._relatedVariableNodeIds
             this.collectRelatedVariableNodeIds()
+            // TODO Update Subscription!
         }
     }
 
