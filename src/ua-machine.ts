@@ -52,9 +52,19 @@ export class UaMachineryMachine {
     itemState: string | null = null
 
     /**
+     * 
+     */
+    itemStateNodeId: string | null = null
+
+    /**
      * Value of CurrentState-Variable of the MachineryOperationMode_StateMachine
      */  
     operationMode: string | null = null
+
+    /**
+     * 
+     */
+    operationModeNodeId: string | null = null
 
     /**
      * Last known initialization Date
@@ -125,6 +135,12 @@ export class UaMachineryMachine {
     }
 
     notify(nodeId: string, dataValue: DataValue) {
+        if (nodeId === this.itemStateNodeId) {
+            this.itemState = `${(dataValue.value.value as LocalizedText).text}`
+        }
+        if (nodeId === this.operationModeNodeId) {
+            this.operationMode = `${(dataValue.value.value as LocalizedText).text}`
+        }
         Array.from(this.monitoring.values()).map((processValue)  => {
             processValue.notify(nodeId, dataValue)
         })
@@ -427,10 +443,12 @@ export class UaMachineryMachine {
                                         case "ExtrusionMachineryItemState_StateMachineType": // Subtype
                                         case "MachineryItemState_StateMachineType":
                                             this.itemState = (readResult.value.value as LocalizedText).text
+                                            this.itemStateNodeId = id
                                             break;
                                         case "MachineOperationModeStateMachineType": // Subtype
                                         case "MachineryOperationModeStateMachineType":
                                             this.operationMode = (readResult.value.value as LocalizedText).text
+                                            this.operationModeNodeId = id
                                             break;
                                         default:
                                             break;
