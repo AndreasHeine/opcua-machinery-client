@@ -406,16 +406,23 @@ export class UaMachineryMachine {
                             } as BrowseDescriptionLike)
                             if (stateMachineBrowseResults.statusCode.value === StatusCodes.Good.value) {
                                 for (let index = 0; index < stateMachineBrowseResults.references!.length; index++) {
-                                    // TODO check displayname for "CurrentState"
+                                    const id = makeNodeIdStringFromExpandedNodeId(stateMachineBrowseResults.references![index].nodeId)
+                                    const readDisplayNameResult = await this.session.read({
+                                        nodeId: id,
+                                        attributeId: AttributeIds.DisplayName
+                                    })
+                                    if ((readDisplayNameResult.value.value as LocalizedText).text !== "CurrentState") continue
                                     const readResult: DataValue = await this.session.read({
-                                        nodeId: stateMachineBrowseResults.references![index].nodeId,
+                                        nodeId: id,
                                         attributeId: AttributeIds.Value
                                     })
-                                    this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(stateMachineBrowseResults.references![index].nodeId))
+                                    this._relatedNodeIds.add(id)
                                     switch ((typeDefinitionReadResult.value.value as LocalizedText).text) {
+                                        case "ExtrusionMachineryItemState_StateMachineType": // Subtype
                                         case "MachineryItemState_StateMachineType":
                                             this.itemState = (readResult.value.value as LocalizedText).text
                                             break;
+                                        case "MachineOperationModeStateMachineType": // Subtype
                                         case "MachineryOperationModeStateMachineType":
                                             this.operationMode = (readResult.value.value as LocalizedText).text
                                             break;

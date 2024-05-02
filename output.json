@@ -5,7 +5,7 @@
 		"ServiceLevel": 255,
 		"ServerStatus": {
 			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-02T06:58:28.138Z",
+			"CurrentTime": "2024-05-02T07:20:36.617Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -382,7 +382,7 @@
 				"SerialNumber": "987"
 			},
 			"Components": [],
-			"MachineryItemState": null,
+			"MachineryItemState": "Executing",
 			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
@@ -475,7 +475,7 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": null,
+			"MachineryItemState": "Executing",
 			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
@@ -499,7 +499,7 @@
 				"SerialNumber": "1234"
 			},
 			"Components": [],
-			"MachineryItemState": null,
+			"MachineryItemState": "Executing",
 			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
@@ -633,7 +633,7 @@
 			},
 			"Components": [],
 			"MachineryItemState": "Executing",
-			"MachineryOperationMode": null,
+			"MachineryOperationMode": "Processing",
 			"Monitoring": []
 		},
 		{
