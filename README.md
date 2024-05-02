@@ -14,12 +14,12 @@ The opcua-machinery-client is aware of modelchanges due to "ModelChangeEvents" a
 :heavy_check_mark: 5.2 Finding all Machines in a Server    
 :heavy_check_mark: 5.3 Component Identification and Nameplate  
 :heavy_check_mark: 5.4 Finding all Components of a Machine    
-:x: 5.5 Machine Monitoring  
+:heavy_check_mark: 5.5 Machine Monitoring  
 :x: 5.6 Preventive Maintenance  
 
 #### OPC 40001-2: Machinery Process Values (https://reference.opcfoundation.org/Machinery/ProcessValues/v100/docs/5)
 5 Use Cases  
-:x: The user would like to access the process values of a machine and its various meta data like ranges, precision and unit.  
+:heavy_check_mark: The user would like to access the process values of a machine and its various meta data like ranges, precision and unit.  
 :x: The user would like to access and set the setpoints of the process values of a machine.  
 :x: The user would like to access and set deviation limits of the process values, relative to the setpoints.  
 :x: The user would like to get informed when a process value is passing a deviation limit or range.  
