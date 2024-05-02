@@ -29,6 +29,7 @@ export class dataStoreItem {
     }
 
     updateValue(dataValue: DataValue) {
+        console.log(`OPC UA Client: nodeId='${this.nodeId}' with displayName='${this.displayName}' has changed from '${this.value.value.value}' to '${dataValue.value.value}'!`)
         this.value = dataValue
     }
 
@@ -62,6 +63,11 @@ export class UaProcessValue {
      * A Set of known NodeId's associated with this class-instance
      */  
     _relatedNodeIds = new Set<string>()
+
+    /**
+     * A Set of known Variable-/Property-NodeId's associated with this class-instance
+     */   
+    _relatedVariableNodeIds = new Set<string>()
 
     /**
      * A Map containing all the all the dataStoreItem's 
@@ -167,6 +173,7 @@ export class UaProcessValue {
                 dataItem.updateValue(readResults[0])
                 this._relatedNodeIds.add(id)
                 this._dataStore.set(id, dataItem)
+                this._relatedVariableNodeIds.add(id)
             }
             // Range
             // EngeneeringUnit
@@ -214,6 +221,7 @@ export class UaProcessValue {
                 dataItem.updateValue(readResults[0])
                 this._relatedNodeIds.add(id)
                 this._dataStore.set(id, dataItem)
+                this._relatedVariableNodeIds.add(id)
             }
         }
     }

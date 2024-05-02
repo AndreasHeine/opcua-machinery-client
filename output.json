@@ -4,8 +4,8 @@
 		"ServerState": 0,
 		"ServiceLevel": 255,
 		"ServerStatus": {
-			"StartTime": "2024-05-01T06:51:27.584Z",
-			"CurrentTime": "2024-05-02T08:38:26.874Z",
+			"StartTime": "2024-05-02T08:43:47.831Z",
+			"CurrentTime": "2024-05-02T09:32:44.050Z",
 			"State": 0,
 			"BuildInfo": {
 				"ProductUri": "SampleServer-productUri",
@@ -633,7 +633,7 @@
 			},
 			"Components": [],
 			"MachineryItemState": "Executing",
-			"MachineryOperationMode": "Processing",
+			"MachineryOperationMode": "Setup",
 			"Monitoring": []
 		},
 		{

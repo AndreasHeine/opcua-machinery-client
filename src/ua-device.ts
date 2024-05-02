@@ -24,6 +24,7 @@ import {
     ChannelSecurityToken,
     NotificationMessage,
     ReadValueIdOptions,
+    MonitoringMode,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -102,7 +103,6 @@ const optionsInitial: OPCUAClientOptions = {
     keepSessionAlive: true,
     keepPendingSessionsOnDisconnect: false,
 
-    transportTimeout: 10000,
     connectionStrategy: {
         initialDelay: 1000,
         maxDelay: 5000,
@@ -149,6 +149,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private summery = Object.create({})
     private _reinitializing: boolean = false
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent | UaProcessValue> = new Map()
+    private _relatedVariableNodeIds = new Set<string>()
     private _initialized = false
     private _queuedBaseModelChangeEvents: Variant[][] = []
     private _queuedGeneralModelChangeEvents: Variant[][] = []
@@ -268,7 +269,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: subscription started! subscriptionId='${subscriptionId}'`)
         })
         this.subscription.on("received_notifications", (notificationMessage: NotificationMessage) => {
-            console.log(`OPC UA Client: subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
+            // console.log(`OPC UA Client: subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
             console.log(`OPC UA Client: monitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to the Subscription!`)
@@ -280,6 +281,19 @@ export class OpcUaDeviceClass extends EventEmitter {
                 })
             })
         })
+
+        this.subscription.monitor(
+            {
+                nodeId: "i=2256",
+                attributeId: AttributeIds.Value
+            },
+            {
+                samplingInterval: 5000,
+                queueSize: 1
+            },
+            TimestampsToReturn.Both,
+            MonitoringMode.Reporting
+        )
     }
 
     async initialize() {
@@ -343,10 +357,10 @@ export class OpcUaDeviceClass extends EventEmitter {
         await this.discoverFoundMachines()
 
         this.collectRelatedNodeIds()
+        this.collectRelatedVariableNodeIds()
 
-        // TODO only add Variables and Properties
         await this.subscription!.monitorItems(
-            Array.from(this._relatedNodeIdMap.keys()).map((id) => {
+            Array.from(this._relatedVariableNodeIds.values()).map((id) => {
                 return {
                     nodeId: id,
                     attributeId: AttributeIds.Value,
@@ -396,6 +410,35 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         const relatedNodes = Array.from(this._relatedNodeIdMap.keys())
         console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's`)
+    }
+
+    collectRelatedVariableNodeIds() {
+        this._relatedVariableNodeIds.clear()
+        const machines = Array.from(this.machines.values())
+        for (let index = 0; index < machines.length; index++) {
+            const machine = machines[index] as UaMachineryMachine
+            machine._relatedVariableNodeIds.forEach((nodeId) => {
+                this._relatedVariableNodeIds.add(nodeId)
+            })
+            const components: UaMachineryComponent[] = Array.from(machine.components.values())
+            for (let index = 0; index < components.length; index++) {
+                const component = components[index];
+                component._relatedNodeIds.forEach((nodeId) => {
+                    this._relatedVariableNodeIds.add(nodeId)
+                })
+            }
+            const processValues: UaProcessValue[] = Array.from(machine.monitoring.values())
+            for (let index = 0; index < processValues.length; index++) {
+                const processValue = processValues[index];
+                processValue._relatedNodeIds.forEach((nodeId) => {
+                    this._relatedVariableNodeIds.add(nodeId)
+                })
+            }
+        }
+
+        const relatedVariables = this._relatedVariableNodeIds
+        console.log(relatedVariables)
+        console.log(`OPC UA Client: contains '${relatedVariables.size}' related Variable/Property-NodeId's`)
     }
 
     async processQueuedChangeEvents() {
@@ -546,7 +589,10 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
             }
         }
-        if (changesOccurs === true) this.collectRelatedNodeIds()
+        if (changesOccurs === true) {
+            this.collectRelatedNodeIds()
+            this.collectRelatedVariableNodeIds()
+        }
     }
 
     private async readServerState() {
@@ -674,7 +720,7 @@ export class OpcUaDeviceClass extends EventEmitter {
 
         setInterval(async () => {
             await writeJson("output.json", this.summery, {spaces: '\t'})
-            console.log("OPC UA Client: 'output.json' created!")
+            console.log("OPC UA Client: 'output.json' got updated!")
             this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         }, 10000)
     }

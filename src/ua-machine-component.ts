@@ -45,6 +45,11 @@ export class UaMachineryComponent {
     _relatedNodeIds = new Set<string>()
 
     /**
+     * A Set of known Variable-/Property-NodeId's associated with this class-instance
+     */   
+    _relatedVariableNodeIds = new Set<string>()
+
+    /**
      * HasComponent References
      */
     _components: ReferenceDescription[] = []
@@ -185,6 +190,7 @@ export class UaMachineryComponent {
                                         break;
                                 }
                                 this.identification.set(`${(readResults[1].value.value as LocalizedText).text}`, value)
+                                this._relatedVariableNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
                             }
                         }
                     }
