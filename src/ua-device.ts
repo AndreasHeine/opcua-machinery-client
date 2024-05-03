@@ -24,7 +24,6 @@ import {
     ChannelSecurityToken,
     NotificationMessage,
     ReadValueIdOptions,
-    MonitoringMode,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -144,7 +143,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     private serverStatus: any = {}
     private serviceLevel: number = 0
     private deviceLimits: Map<string, any> = new Map()
-    private foundMachines: string[] = []
+    private foundMachines = new Set<string>()
     private machines: Map<string, any> = new Map()
     private summery = Object.create({})
     private _reinitializing: boolean = false
@@ -231,7 +230,6 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async createSession(userIdentityInfo: UserIdentityInfo | undefined) {
-        this.session = undefined
         this.session = await this.client.createSession2(userIdentityInfo)
         this.session.on("session_closed", (statusCode: StatusCode) => {
             console.error(`OPC UA Client: session closed! statusCode='${statusCode.toString()}'`)
@@ -277,22 +275,38 @@ export class OpcUaDeviceClass extends EventEmitter {
             this.monitoredItemValueMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
                 Array.from(this.machines.values()).map((machine)  => {
-                    machine.notify(monitoredItem.itemToMonitor.nodeId.toString(), dataValue)
+                    const nodeId = monitoredItem.itemToMonitor.nodeId.toString()
+                    switch (nodeId) {
+                        case "ns=0;i=2256":
+                        case "i=2256":
+                            this.serverStatus = dataValue.value.value
+                            break;
+                        case "ns=0;i=2267":
+                        case "i=2267":
+                            this.serviceLevel = dataValue.value.value
+                            break;                    
+                        default:
+                            machine.notify(nodeId, dataValue)
+                            break;
+                    }
                 })
             })
         })
-
-        this.subscription.monitor(
-            {
-                nodeId: "i=2256",
-                attributeId: AttributeIds.Value
-            },
+        this.subscription.monitorItems([
+                {
+                    nodeId: "i=2256",
+                    attributeId: AttributeIds.Value
+                },
+                {
+                    nodeId: "i=2267",
+                    attributeId: AttributeIds.Value
+                }
+            ],
             {
                 samplingInterval: 5000,
                 queueSize: 1
             },
-            TimestampsToReturn.Both,
-            MonitoringMode.Reporting
+            TimestampsToReturn.Both
         )
     }
 
@@ -323,7 +337,54 @@ export class OpcUaDeviceClass extends EventEmitter {
         await this.readNameSpaceArray()
         await this.readServerProfileArray()
         await this.readDeviceLimits()
+        this.updateSummery()
+        await this.createSubscription()
+        await this.setupChangeEvents()
+        await this.findMachinesOnServer()
+        await this.discoverFoundMachines()
+        this.collectRelatedNodeIds()
+        this.collectRelatedVariableNodeIds()
+        const maxPerCall = this.deviceLimits.get("MaxMonitoredItemsPerCall") || 0
+        const maxPerSub = this.deviceLimits.get("MaxMonitoredItemsPerSubscription") || 0
+        if (
+            (maxPerCall === 0 || maxPerCall >= this._relatedVariableNodeIds.size) &&
+            (maxPerSub === 0 || (maxPerSub - 10) >= this._relatedVariableNodeIds.size)
+        ) {
+            await this.subscription!.monitorItems(
+                Array.from(this._relatedVariableNodeIds.values()).map((id) => {
+                    return {
+                        nodeId: id,
+                        attributeId: AttributeIds.Value,
+                    } as ReadValueIdOptions
+                }), 
+                {
+                    samplingInterval: 2000,
+                    queueSize: 1000
+                }, 
+                TimestampsToReturn.Both
+            )
+        } else {
+            // TODO log message to many nodes to subscribe!
+        }
+        this._initialized = true
+        if (
+            this._queuedBaseModelChangeEvents.length > 0 ||
+            this._queuedGeneralModelChangeEvents.length > 0 ||
+            this._queuedSemanticChangeEvents.length > 0
+        ) {
+            await this.processQueuedChangeEvents()
+        }
 
+        setInterval(async () => {
+            const old = this.foundMachines
+            await this.findMachinesOnServer()
+            if (this.foundMachines.size !== old.size) {
+                // to do find new machine in foundMachines
+            }
+        }, 60 * 1000)
+    }
+
+    updateSummery() {
         Object.assign(this.summery, {
             Server: {
                 Endpoint: this.endpoint,
@@ -348,40 +409,8 @@ export class OpcUaDeviceClass extends EventEmitter {
                 ServerProfileArray: this.serverProfileArray,
                 OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
             },
-            Machines: Object.fromEntries(this.machines.entries())
+            Machines: Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         })
-        await this.createSubscription()
-        await this.setupChangeEvents()
-
-        await this.findMachinesOnServer()
-        await this.discoverFoundMachines()
-
-        this.collectRelatedNodeIds()
-        this.collectRelatedVariableNodeIds()
-
-        await this.subscription!.monitorItems(
-            Array.from(this._relatedVariableNodeIds.values()).map((id) => {
-                return {
-                    nodeId: id,
-                    attributeId: AttributeIds.Value,
-                } as ReadValueIdOptions
-            }), 
-            {
-                samplingInterval: 2000,
-                queueSize: 1000
-            }, 
-            TimestampsToReturn.Both
-        )
-
-        this._initialized = true
-
-        if (
-            this._queuedBaseModelChangeEvents.length > 0 ||
-            this._queuedGeneralModelChangeEvents.length > 0 ||
-            this._queuedSemanticChangeEvents.length > 0
-        ) {
-            await this.processQueuedChangeEvents()
-        }
     }
 
     collectRelatedNodeIds() {
@@ -706,25 +735,25 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async discoverFoundMachines() {
-        for (let index = 0; index < this.foundMachines.length; index++) {
-            const machineNodeId = this.foundMachines[index]
-            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${this.foundMachines.length}] with id='${machineNodeId}'`)
+        const foundMachines = Array.from(this.foundMachines.values())
+        for (let index = 0; index < foundMachines.length; index++) {
+            const machineNodeId = foundMachines[index]
+            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
             const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
         }
-
-        this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
+        this.updateSummery()
         await writeJson("output.json", this.summery, {spaces: '    '})
-
         setInterval(async () => {
+            this.updateSummery()
             await writeJson("output.json", this.summery, {spaces: '    '})
             console.log("OPC UA Client: 'output.json' got updated!")
-            this.summery.Machines = Array.from(this.machines.values()).map((item) => {return item.toJSON()})
         }, 10000)
     }
 
     private async findMachinesOnServer() {
+        console.log(`OPC UA Client: findMachinesOnServer...`)
         const machineryIndex = this.getNamespaceIndex("http://opcfoundation.org/UA/Machinery/")
         if (machineryIndex === undefined) return
         const machinesFolderNodeId = `ns=${machineryIndex};i=1001` // id is defined in spec. and can be hardcoded!
@@ -734,8 +763,8 @@ export class OpcUaDeviceClass extends EventEmitter {
             referenceTypeId: ReferenceTypeIds.Organizes
         } as BrowseDescriptionLike)
         browseResult.references!.forEach((result) => {
-            this.foundMachines.push(makeNodeIdStringFromExpandedNodeId(result.nodeId))
+            this.foundMachines.add(makeNodeIdStringFromExpandedNodeId(result.nodeId))
         })
-        console.log(`OPC UA Client: found '${this.foundMachines.length}' machine instances!`)
+        console.log(`OPC UA Client: found '${this.foundMachines.size}' machine instances!`)
     }
 }
