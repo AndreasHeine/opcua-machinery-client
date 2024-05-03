@@ -2,9 +2,12 @@
 
 ### A small Project to showcase the OPC UA for Machinery from the End-User perspective!
 
-The opcua-machinery-client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components and their ComponentIdentification. At the end an output.json will be created with the collected results of the OPC UA Server!
+#### Functionalities
+* The Client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components and their ComponentIdentification. At the end an output.json will be created with the collected results of the OPC UA Server!
 
-The opcua-machinery-client is aware of modelchanges due to "ModelChangeEvents" and partially reinitializes the related Item (Machine-, MachineComponent- or ProcessValue-Instance)!
+* The Client is aware of modelchanges due to "GeneralModelChangeEvents" and partially reinitializes the related Item (Machine-, MachineComponent- or ProcessValue-Instance)!
+
+* The Client automatically subscribes all variables / properties he finds and updates the output.json file every 10s with the latest data
 
 ### Roadmap [done: :heavy_check_mark:, not yet: :x:]:
 
