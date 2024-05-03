@@ -186,7 +186,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             console.log(`OPC UA Client: connection reestablished!`)
         })
         this.client.on("lifetime_75", (token: ChannelSecurityToken) => {
-            console.log(`OPC UA Client: securechannel token lifetime @ 75%! token='${token}'`)
+            console.log(`OPC UA Client: securechannel token lifetime @ 75%! tokenId='${token.tokenId}'`)
         })
         this.client.on("receive_chunk", () => {
             // too noisy
@@ -736,13 +736,19 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private async discoverFoundMachines() {
         const foundMachines = Array.from(this.foundMachines.values())
-        for (let index = 0; index < foundMachines.length; index++) {
-            const machineNodeId = foundMachines[index]
-            console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
+        // for (let index = 0; index < foundMachines.length; index++) {
+        //     const machineNodeId = foundMachines[index]
+        //     console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
+        //     const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
+        //     await uaMachine.initialize()
+        //     this.machines.set(`${machineNodeId}`, uaMachine)
+        // }
+        await Promise.all(foundMachines.map(async (machineNodeId) => {
+            console.log(`OPC UA Client: Loading MetaData from Machine with id='${machineNodeId}'`)
             const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
-        }
+        }))
         this.updateSummery()
         await writeJson("output.json", this.summery, {spaces: '    '})
         setInterval(async () => {
