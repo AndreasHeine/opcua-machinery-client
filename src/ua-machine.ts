@@ -299,7 +299,7 @@ export class UaMachineryMachine {
                                 this.monitoring.set(`${id}`, processValue)
                                 this._relatedNodeIds.add(id)
                             } catch (error) {
-                                
+                                console.log(error)
                             }
                         }
                     }
@@ -310,14 +310,14 @@ export class UaMachineryMachine {
                     } as BrowseDescriptionLike)
                     if (monitoringBrowseResults2.statusCode.value === StatusCodes.Good.value) {
                         for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
-                            const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
+                            const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults2.references![index].nodeId);
                             try {
                                 const processValue = new UaProcessValue(this.session, id)
                                 await processValue.initialize()
                                 this.monitoring.set(`${id}`, processValue)
                                 this._relatedNodeIds.add(id)
                             } catch (error) {
-                                
+                                console.log(error)
                             }
                         }
                     }
