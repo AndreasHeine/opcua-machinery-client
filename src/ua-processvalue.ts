@@ -29,7 +29,8 @@ export class dataStoreItem {
     }
 
     updateValue(dataValue: DataValue) {
-        console.log(`OPC UA Client: nodeId='${this.nodeId}' with displayName='${this.displayName}' has changed from '${this.value.value.value}' to '${dataValue.value.value}'!`)
+        if (this.value.value.value === dataValue.value.value) return
+        console.log(`OPC UA Client: DataChange nodeId='${this.nodeId}' displayName='${this.displayName}' old='${this.value.value.value}' new='${dataValue.value.value}'!`)
         this.value = dataValue
     }
 
