@@ -561,7 +561,7 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async processGeneralModelChangeEvent(values: Variant[]) {
-        let changesOccurs = false
+        let changesOccurred = false
         for (let index = 0; index < values.length; index++) {
             const variant = values[index];
             if (Array.isArray(variant.value)) {
@@ -577,7 +577,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
                 const arr = Array.from(toBeInitialized)
                 if (arr.length > 0) {
-                    changesOccurs = true
+                    changesOccurred = true
                 }
                 for (let index = 0; index < arr.length; index++) {
                     const item = arr[index];
@@ -586,7 +586,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 }
             }
         }
-        if (changesOccurs === true) {
+        if (changesOccurred === true) {
             this.collectRelatedNodeIds()
             // const oldVariableNodeIds = this._relatedVariableNodeIds
             this.collectRelatedVariableNodeIds()
