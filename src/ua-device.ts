@@ -379,10 +379,13 @@ export class OpcUaDeviceClass extends EventEmitter {
         setInterval(async () => {
             if (this.isConnected() === false) return
             if (this.isSessionPresent() === false) return
-            const old = this.foundMachines
             await this.findMachinesOnServer()
-            if (this.foundMachines.size !== old.size) {
-                // to do find new machine in foundMachines
+            const foundMachines = Array.from(this.foundMachines)
+            for (let index = 0; index < foundMachines.length; index++) {
+                const machineId = foundMachines[index];
+                if (this._relatedNodeIdMap.has(machineId) === false) {
+                    await this.discoverSingleMachine(machineId)
+                }
             }
         }, 60 * 1000)
     }
@@ -737,15 +740,23 @@ export class OpcUaDeviceClass extends EventEmitter {
         return index === -1 ? undefined : index
     }
 
+    private async discoverSingleMachine(id: string) {
+        try {
+            const uaMachine = new UaMachineryMachine(this.session!, id)
+            await uaMachine.initialize()
+            this.machines.set(`${id}`, uaMachine)        
+        } catch (error) {
+            console.error(`OPC UA Client: '${id}' is not a valid Machine! ${error}`)
+        }
+    }
+
     private async discoverFoundMachines() {
         console.log(`OPC UA Client: start loading MetaData...`)
         const foundMachines = Array.from(this.foundMachines.values())
         for (let index = 0; index < foundMachines.length; index++) {
             const machineNodeId = foundMachines[index]
             console.log(`OPC UA Client: loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
-            const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
-            await uaMachine.initialize()
-            this.machines.set(`${machineNodeId}`, uaMachine)
+            await this.discoverSingleMachine(machineNodeId)
         }
         console.log(`OPC UA Client: done loading MetaData!`)
         this.updateSummery()
