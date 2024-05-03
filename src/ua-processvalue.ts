@@ -75,6 +75,16 @@ export class UaProcessValue {
      */
     _dataStore: Map<string, dataStoreItem> = new Map()
 
+    _actualValueTagNodeId: string | null = null
+    _actualValueNodeId: string | null = null
+    _actualValueEURangeNodeId: string | null = null
+    _actualValueEngeneeringUnitNodeId: string | null = null
+
+    _setpointValueTagNodeId: string | null = null
+    _setpointValueNodeId: string | null = null
+    _setpointValueEURangeNodeId: string | null = null
+    _setpointValueEngeneeringUnitNodeId: string | null = null
+
     constructor(session: ClientSession, nodeId: string) {
         this.session = session
         this.nodeId = nodeId
@@ -163,6 +173,7 @@ export class UaProcessValue {
                 this._relatedNodeIds.add(id)
                 this._dataStore.set(id, dataItem)
                 this._relatedVariableNodeIds.add(id)
+                this._actualValueNodeId = id
             }
             // Range
             // EngeneeringUnit
@@ -205,6 +216,7 @@ export class UaProcessValue {
                 this._relatedNodeIds.add(id)
                 this._dataStore.set(id, dataItem)
                 this._relatedVariableNodeIds.add(id)
+                this._actualValueTagNodeId = id
             }
         }
     }
@@ -222,7 +234,19 @@ export class UaProcessValue {
             NodeId: this.nodeId,
             Attributes: Object.fromEntries(this.attributes.entries()),
             References: Object.fromEntries(this.references.entries()),
-            Variables: Array.from(this._dataStore.values()).map((c) => {return c.toJSON()})
+            ActualValue: {
+                Tag: this._dataStore.get(this._actualValueTagNodeId === null ? "" : this._actualValueTagNodeId) || null,
+                Value: this._dataStore.get(this._actualValueNodeId === null ? "" : this._actualValueNodeId) || null,
+                EURange: null,
+                EngineeringUnit: null
+            },
+            SetpointValue: {
+                Tag: this._dataStore.get(this._setpointValueTagNodeId === null ? "" : this._setpointValueTagNodeId) || null,
+                Value: this._dataStore.get(this._setpointValueNodeId === null ? "" : this._setpointValueNodeId) || null,
+                EURange: null,
+                EngineeringUnit: null
+            },
+            // DataSet: Array.from(this._dataStore.values()).map((c) => {return c.toJSON()})
         }
     }
 }
