@@ -339,7 +339,18 @@ export class UaMachineryMachine {
             })
             if (readResult.statusCode.value === StatusCodes.Good.value) {
                 if ((readResult.value.value as QualifiedName).name === "MachineryBuildingBlocks") {
-                    // TODO check "MachineryBuildingBlocks" TypeDefinition
+                    const typeDefinitionBrowseResult = await this.session.browse({
+                        nodeId: componentId,
+                        browseDirection: BrowseDirection.Forward,
+                        referenceTypeId: ReferenceTypeIds.HasTypeDefinition
+                    } as BrowseDescriptionLike)
+                    if (typeDefinitionBrowseResult.references!.length > 1) {
+                        console.warn(`Machine-Instance '${this.nodeId}' has more then one TypeDefinition-Reference!`)
+                    }
+                    const typeDefinitionNodeId = makeNodeIdStringFromExpandedNodeId(typeDefinitionBrowseResult.references![0].nodeId)
+                    if (typeDefinitionNodeId !== "i=61" && typeDefinitionNodeId !== "ns=0;i=61") {
+                        continue
+                    }
                     const blocksBrowseResults = await this.session.browse({
                         nodeId: componentId,
                         browseDirection: BrowseDirection.Forward,
