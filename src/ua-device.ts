@@ -729,12 +729,6 @@ export class OpcUaDeviceClass extends EventEmitter {
         if (machineryIndex === undefined) return
         const machinesFolderNodeId = `ns=${machineryIndex};i=1001` // id is defined in spec. and can be hardcoded!
         const browseResult = await this.session!.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: machinesFolderNodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.Organizes

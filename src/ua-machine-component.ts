@@ -100,12 +100,6 @@ export class UaMachineryComponent {
 
     async getAddIns(): Promise<ReferenceDescription[] | null> {
         const browseResult = await this.session!.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasAddIn
@@ -118,12 +112,6 @@ export class UaMachineryComponent {
 
     async loadMachineComponentTypeDefinition() {
         const browseResult = await this.session!.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasTypeDefinition
@@ -153,12 +141,6 @@ export class UaMachineryComponent {
             if (readResult.statusCode.value === StatusCodes.Good.value) {
                 if ((readResult.value.value as QualifiedName).name === "Identification") {
                     const identificationBrowseResults = await this.session.browse({
-                        // nodeId?: (NodeIdLike | null);
-                        // browseDirection?: BrowseDirection;
-                        // referenceTypeId?: (NodeIdLike | null);
-                        // includeSubtypes?: UABoolean;
-                        // nodeClassMask?: UInt32;
-                        // resultMask?: UInt32;
                         nodeId: id,
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.HasProperty

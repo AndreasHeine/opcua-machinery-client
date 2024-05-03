@@ -109,12 +109,6 @@ export class UaProcessValue {
 
     async discoverMetaData() {
         const browseResult = await this.session!.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasTypeDefinition
@@ -132,12 +126,6 @@ export class UaProcessValue {
         assert(`${(typeDefinitionReadResult.value.value as LocalizedText).text}` === "ProcessValueType")
         // AnalogSignal
         const processValueBrowseResults = await this.session.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasComponent
@@ -180,12 +168,6 @@ export class UaProcessValue {
         }
         // Tag
         const processValueBrowseResults2 = await this.session.browse({
-            // nodeId?: (NodeIdLike | null);
-            // browseDirection?: BrowseDirection;
-            // referenceTypeId?: (NodeIdLike | null);
-            // includeSubtypes?: UABoolean;
-            // nodeClassMask?: UInt32;
-            // resultMask?: UInt32;
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasProperty
