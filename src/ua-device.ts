@@ -746,6 +746,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             await uaMachine.initialize()
             this.machines.set(`${id}`, uaMachine)        
         } catch (error) {
+            console.log(error)
             console.error(`OPC UA Client: '${id}' is not a valid Machine! ${error}`)
         }
     }
