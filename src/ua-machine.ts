@@ -292,13 +292,12 @@ export class UaMachineryMachine {
                     } as BrowseDescriptionLike)
                     if (monitoringBrowseResults.statusCode.value === StatusCodes.Good.value) {
                         for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
-                            // TODO check TypeDefinition!
-                            const id = monitoringBrowseResults.references![index].nodeId;
+                            const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
                             try {
-                                const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
+                                const processValue = new UaProcessValue(this.session, id)
                                 await processValue.initialize()
                                 this.monitoring.set(`${id}`, processValue)
-                                this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(id))
+                                this._relatedNodeIds.add(id)
                             } catch (error) {
                                 
                             }
@@ -311,7 +310,6 @@ export class UaMachineryMachine {
                     } as BrowseDescriptionLike)
                     if (monitoringBrowseResults2.statusCode.value === StatusCodes.Good.value) {
                         for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
-                            // TODO check TypeDefinition!
                             const id = monitoringBrowseResults2.references![index].nodeId;
                             try {
                                 const processValue = new UaProcessValue(this.session, makeNodeIdStringFromExpandedNodeId(id))
