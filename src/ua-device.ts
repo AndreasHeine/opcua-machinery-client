@@ -218,12 +218,12 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     isConnected(): boolean {
-        return this.client.isReconnecting
+        return this.client.isReconnecting === false ? true : false
     }
 
     isSessionPresent(): boolean {
         if (this.session !== undefined) {
-            return this.session!.isReconnecting
+            return this.session!.isReconnecting === false ? true : false
         } else {
             return false
         }
@@ -270,7 +270,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             // console.log(`OPC UA Client: subscription got notification message! notificationMessage='${JSON.stringify(notificationMessage)}'`)
         })
         this.subscription.on("item_added", (monitoredItem: ClientMonitoredItem) => {
-            console.log(`OPC UA Client: monitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to the Subscription!`)
+            // console.log(`OPC UA Client: monitoredItem with nodeId='${monitoredItem.itemToMonitor.nodeId}' has been added to the Subscription!`)
             if (monitoredItem.itemToMonitor.attributeId.valueOf() !== AttributeIds.Value) return
             this.monitoredItemValueMap.set(monitoredItem.itemToMonitor.nodeId.toString(), monitoredItem)
             monitoredItem.on("changed", (dataValue: DataValue) => {
@@ -292,6 +292,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 })
             })
         })
+        console.log(`OPC UA Client: add ServerState and ServiceLevel to Subscription!`)
         this.subscription.monitorItems([
                 {
                     nodeId: "i=2256",
@@ -350,6 +351,7 @@ export class OpcUaDeviceClass extends EventEmitter {
             (maxPerCall === 0 || maxPerCall >= this._relatedVariableNodeIds.size) &&
             (maxPerSub === 0 || (maxPerSub - 10) >= this._relatedVariableNodeIds.size)
         ) {
+            console.log(`OPC UA Client: adding all '${this._relatedVariableNodeIds.size}' realated Variables and Properties to Subscription!`)
             await this.subscription!.monitorItems(
                 Array.from(this._relatedVariableNodeIds.values()).map((id) => {
                     return {
@@ -364,7 +366,7 @@ export class OpcUaDeviceClass extends EventEmitter {
                 TimestampsToReturn.Both
             )
         } else {
-            // TODO log message to many nodes to subscribe!
+            console.warn(`OPC UA Client: unable to add realated Variables and Properties to Subscription due to DeviceLimits!`)
         }
         this._initialized = true
         if (
@@ -374,8 +376,9 @@ export class OpcUaDeviceClass extends EventEmitter {
         ) {
             await this.processQueuedChangeEvents()
         }
-
         setInterval(async () => {
+            if (this.isConnected() === false) return
+            if (this.isSessionPresent() === false) return
             const old = this.foundMachines
             await this.findMachinesOnServer()
             if (this.foundMachines.size !== old.size) {
@@ -735,23 +738,21 @@ export class OpcUaDeviceClass extends EventEmitter {
     }
 
     private async discoverFoundMachines() {
+        console.log(`OPC UA Client: start loading MetaData...`)
         const foundMachines = Array.from(this.foundMachines.values())
-        // for (let index = 0; index < foundMachines.length; index++) {
-        //     const machineNodeId = foundMachines[index]
-        //     console.log(`OPC UA Client: Loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
-        //     const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
-        //     await uaMachine.initialize()
-        //     this.machines.set(`${machineNodeId}`, uaMachine)
-        // }
-        await Promise.all(foundMachines.map(async (machineNodeId) => {
-            console.log(`OPC UA Client: Loading MetaData from Machine with id='${machineNodeId}'`)
+        for (let index = 0; index < foundMachines.length; index++) {
+            const machineNodeId = foundMachines[index]
+            console.log(`OPC UA Client: loading MetaData from Machine [${index + 1}/${foundMachines.length}] with id='${machineNodeId}'`)
             const uaMachine = new UaMachineryMachine(this.session!, machineNodeId)
             await uaMachine.initialize()
             this.machines.set(`${machineNodeId}`, uaMachine)
-        }))
+        }
+        console.log(`OPC UA Client: done loading MetaData!`)
         this.updateSummery()
         await writeJson("output.json", this.summery, {spaces: '    '})
         setInterval(async () => {
+            if (this.isConnected() === false) return
+            if (this.isSessionPresent() === false) return
             this.updateSummery()
             await writeJson("output.json", this.summery, {spaces: '    '})
             console.log("OPC UA Client: 'output.json' got updated!")
