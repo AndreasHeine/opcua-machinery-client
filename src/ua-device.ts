@@ -635,9 +635,10 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2259",
             attributeId: AttributeIds.Value
         })
-        // TODO check statuscode!
-        this.serverState = dv?.value.value
-        console.log(`OPC UA Client: read i=2259 [Server_ServerStatus_State] Value '${this.serverState}' StatusCode '${dv.statusCode.name}'`)
+        if (isStatusCodeGoodish(dv.statusCode)) {
+            this.serverState = dv.value.value
+        }
+        console.log(`OPC UA Client: read i=2259 [Server_ServerStatus_State] Value '${dv.value.value}' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readServerStatus() {
@@ -646,9 +647,10 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2256",
             attributeId: AttributeIds.Value
         })
-        // TODO check statuscode!
-        this.serverStatus = dv?.value.value
-        console.log(`OPC UA Client: read i=2256 [Server_ServerStatus] Value '${JSON.stringify(this.serverStatus)}' StatusCode '${dv.statusCode.name}'`)
+        if (isStatusCodeGoodish(dv.statusCode)) {
+            this.serverStatus = dv.value.value
+        }
+        console.log(`OPC UA Client: read i=2256 [Server_ServerStatus] Value '${JSON.stringify(dv.value.value)}' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readServiceLevel() {
@@ -657,9 +659,10 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2267",
             attributeId: AttributeIds.Value
         })
-        // TODO check statuscode!
-        this.serviceLevel = dv!.value.value
-        console.log(`OPC UA Client: read i=2267 [Server_ServiceLevel] Value '${this.serviceLevel}' StatusCode '${dv.statusCode.name}'`)
+        if (isStatusCodeGoodish(dv.statusCode)) {
+            this.serviceLevel = dv.value.value
+        }
+        console.log(`OPC UA Client: read i=2267 [Server_ServiceLevel] Value '${dv.value.value}' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readNameSpaceArray() {
@@ -668,9 +671,10 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2255",
             attributeId: AttributeIds.Value
         })
-        // TODO check statuscode!
-        this.namespaceArray = dv!.value.value
-        console.log(`OPC UA Client: read i=2255 [Server_NamespaceArray] Value '[${this.namespaceArray}]' StatusCode '${dv.statusCode.name}'`)
+        if (isStatusCodeGoodish(dv.statusCode)) {
+            this.namespaceArray = dv.value.value
+        }
+        console.log(`OPC UA Client: read i=2255 [Server_NamespaceArray] Value '[${dv.value.value}]' StatusCode '${dv.statusCode.name}'`)
     }
 
     private async readDeviceLimits() {
@@ -730,9 +734,10 @@ export class OpcUaDeviceClass extends EventEmitter {
             nodeId: "i=2269",
             attributeId: AttributeIds.Value
         })
-        // TODO check statuscode!
-        this.serverProfileArray = dv!.value.value
-        console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${this.serverProfileArray}]' StatusCode '${dv.statusCode.name}'`)
+        if (isStatusCodeGoodish(dv.statusCode)) {
+            this.serverProfileArray = dv.value.value
+        }
+        console.log(`OPC UA Client: read i=2269 [Server_ServerCapabilities_ServerProfileArray] Value '[${dv.value.value}]' StatusCode '${dv.statusCode.name}'`)
     }   
 
     private getNamespaceIndex(uri: string): number | undefined {
@@ -742,7 +747,7 @@ export class OpcUaDeviceClass extends EventEmitter {
 
     private async discoverSingleMachine(id: string) {
         try {
-            const uaMachine = new UaMachineryMachine(this.session!, id)
+            const uaMachine = new UaMachineryMachine(this.session!, id, this.namespaceArray)
             await uaMachine.initialize()
             this.machines.set(`${id}`, uaMachine)        
         } catch (error) {
@@ -781,9 +786,11 @@ export class OpcUaDeviceClass extends EventEmitter {
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.Organizes
         } as BrowseDescriptionLike)
-        browseResult.references!.forEach((result) => {
-            this.foundMachines.add(makeNodeIdStringFromExpandedNodeId(result.nodeId))
-        })
-        console.log(`OPC UA Client: found '${this.foundMachines.size}' machine instances!`)
+        if (isStatusCodeGoodish(browseResult.statusCode)) {
+            browseResult.references!.forEach((result) => {
+                this.foundMachines.add(makeNodeIdStringFromExpandedNodeId(result.nodeId))
+            })
+            console.log(`OPC UA Client: found '${this.foundMachines.size}' machine instances!`)
+        }
     }
 }

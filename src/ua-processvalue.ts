@@ -10,7 +10,7 @@ import {
     ReferenceTypeIds, 
     StatusCodes 
 } from "node-opcua";
-import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
+import { isStatusCodeGoodish, makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
 import assert from "assert";
 
 export class dataStoreItem {
@@ -134,14 +134,14 @@ export class UaProcessValue {
             attributeId: AttributeIds.DisplayName
         })
         this.references.set("TypeDefinition", (typeDefinitionReadResult.value.value as LocalizedText).text) 
-        assert(`${(typeDefinitionReadResult.value.value as LocalizedText).text}` === "ProcessValueType")
+        assert(`${(typeDefinitionReadResult.value.value as LocalizedText).text}` === "ProcessValueType", `NodeId='${this.nodeId}' with TypeDefinition='${(typeDefinitionReadResult.value.value as LocalizedText).text}' !== 'ProcessValueType' skipping node!`)
         // AnalogSignal
         const processValueBrowseResults = await this.session.browse({
             nodeId: this.nodeId,
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasComponent
         } as BrowseDescriptionLike)
-        if (processValueBrowseResults.statusCode.value === StatusCodes.Good.value) {
+        if (isStatusCodeGoodish(processValueBrowseResults.statusCode)) {
             for (let index = 0; index < processValueBrowseResults.references!.length; index++) {
                 // TODO check TypeDefinition!
                 const id = makeNodeIdStringFromExpandedNodeId(processValueBrowseResults.references![index].nodeId)
@@ -184,7 +184,7 @@ export class UaProcessValue {
             browseDirection: BrowseDirection.Forward,
             referenceTypeId: ReferenceTypeIds.HasProperty
         } as BrowseDescriptionLike)
-        if (processValueBrowseResults2.statusCode.value === StatusCodes.Good.value) {
+        if (isStatusCodeGoodish(processValueBrowseResults2.statusCode)) {
             for (let index = 0; index < processValueBrowseResults2.references!.length; index++) {
                 // TODO check TypeDefinition!
                 const id = makeNodeIdStringFromExpandedNodeId(processValueBrowseResults2.references![index].nodeId)

@@ -13,13 +13,14 @@ import {
     StatusCodes 
 } from "node-opcua";
 import { UaMachineryComponent } from "./ua-machine-component";
-import { makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
+import { isStatusCodeGoodish, makeNodeIdStringFromExpandedNodeId } from "./ua-helper";
 import { UaProcessValue } from "./ua-processvalue";
 
 export class UaMachineryMachine {
 
     private session: ClientSession
     readonly nodeId: string
+    readonly namespaceArray: string[] = []
 
     /**
      * Attributes of the Machine-Instance-Object e.g. DisplayName, BrowseName and Description
@@ -91,9 +92,10 @@ export class UaMachineryMachine {
      */
     _addIns: ReferenceDescription[] = []
 
-    constructor(session: ClientSession, nodeId: string) {
+    constructor(session: ClientSession, nodeId: string, namespaceArray: string[]) {
         this.session = session
         this.nodeId = nodeId
+        this.namespaceArray = namespaceArray
         this._relatedNodeIds.add(nodeId)
     }
 
@@ -201,7 +203,7 @@ export class UaMachineryMachine {
                 nodeId: id,
                 attributeId: AttributeIds.BrowseName
             })
-            if (readResult.statusCode.value === StatusCodes.Good.value) {
+            if (isStatusCodeGoodish(readResult.statusCode)) {
                 if ((readResult.value.value as QualifiedName).name === "Identification") {
                     const identificationBrowseResults = await this.session.browse({
                         nodeId: id,
@@ -211,7 +213,7 @@ export class UaMachineryMachine {
                     identificationBrowseResults.references?.forEach((reference: ReferenceDescription) => {
                         this._relatedNodeIds.add(makeNodeIdStringFromExpandedNodeId(reference.nodeId))
                     })
-                    if (identificationBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                    if (isStatusCodeGoodish(identificationBrowseResults.statusCode)) {
                         for (let index = 0; index < identificationBrowseResults.references!.length; index++) {
                             const id = identificationBrowseResults.references![index].nodeId;
                             const readResults = await this.session.read([
@@ -224,7 +226,7 @@ export class UaMachineryMachine {
                                     attributeId: AttributeIds.DisplayName
                                 } as ReadValueIdOptions,
                             ])
-                            if (readResults[0].statusCode.value === StatusCodes.Good.value) {
+                            if (isStatusCodeGoodish(readResults[0].statusCode)) {
                                 let value
                                 switch (readResults[0].value.dataType.valueOf()) {
                                     case DataTypeIds.LocalizedText.valueOf():
@@ -253,14 +255,14 @@ export class UaMachineryMachine {
                 nodeId: id,
                 attributeId: AttributeIds.BrowseName
             })
-            if (readResult.statusCode.value === StatusCodes.Good.value) {
+            if (isStatusCodeGoodish(readResult.statusCode)) {
                 if ((readResult.value.value as QualifiedName).name === "Components") {
                     const componentBrowseResults = await this.session.browse({
                         nodeId: id,
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.HasComponent
                     } as BrowseDescriptionLike)
-                    if (componentBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                    if (isStatusCodeGoodish(componentBrowseResults.statusCode)) {
                         for (let index = 0; index < componentBrowseResults.references!.length; index++) {
                             const id = componentBrowseResults.references![index].nodeId;
                             const component = new UaMachineryComponent(this.session, makeNodeIdStringFromExpandedNodeId(id))
@@ -274,6 +276,17 @@ export class UaMachineryMachine {
         }
     }
 
+    async loadProcessValue(id: string) {
+        try {
+            const processValue = new UaProcessValue(this.session, id)
+            await processValue.initialize()
+            this.monitoring.set(`${id}`, processValue)
+            this._relatedNodeIds.add(id)
+        } catch (error) {
+            console.warn(`OPC UA Client: error while loading ProcessValue -> ${(error as Error).message}`)
+        }  
+    }
+
     async loadMonitoring() {
         if (this._components === null) return
         if (this._components.length === 0) return
@@ -283,42 +296,34 @@ export class UaMachineryMachine {
                 nodeId: id,
                 attributeId: AttributeIds.BrowseName
             })
-            if (readResult.statusCode.value === StatusCodes.Good.value) {
+            if (isStatusCodeGoodish(readResult.statusCode)) {
                 if ((readResult.value.value as QualifiedName).name === "Monitoring") {
+                    // Check HasComponent references
                     const monitoringBrowseResults = await this.session.browse({
                         nodeId: id,
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.HasComponent
                     } as BrowseDescriptionLike)
-                    if (monitoringBrowseResults.statusCode.value === StatusCodes.Good.value) {
-                        for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
-                            const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
-                            try {
-                                const processValue = new UaProcessValue(this.session, id)
-                                await processValue.initialize()
-                                this.monitoring.set(`${id}`, processValue)
-                                this._relatedNodeIds.add(id)
-                            } catch (error) {
-                                console.log(error)
+                    if (isStatusCodeGoodish(monitoringBrowseResults.statusCode)) {
+                        if (this.namespaceArray.includes("http://opcfoundation.org/UA/Machinery/ProcessValues/")) {
+                            for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
+                                const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
+                                await this.loadProcessValue(id)
                             }
                         }
                     }
+                    // Check Organizes references
                     const monitoringBrowseResults2 = await this.session.browse({
                         nodeId: id,
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.Organizes
                     } as BrowseDescriptionLike)
-                    if (monitoringBrowseResults2.statusCode.value === StatusCodes.Good.value) {
-                        for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
-                            const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults2.references![index].nodeId);
-                            try {
-                                const processValue = new UaProcessValue(this.session, id)
-                                await processValue.initialize()
-                                this.monitoring.set(`${id}`, processValue)
-                                this._relatedNodeIds.add(id)
-                            } catch (error) {
-                                console.log(error)
-                            }
+                    if (isStatusCodeGoodish(monitoringBrowseResults2.statusCode)) {
+                        if (this.namespaceArray.includes("http://opcfoundation.org/UA/Machinery/ProcessValues/")) {
+                            for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
+                               const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults2.references![index].nodeId);
+                               await this.loadProcessValue(id)
+                           }
                         }
                     }
                 }
@@ -335,7 +340,7 @@ export class UaMachineryMachine {
                 nodeId: componentId,
                 attributeId: AttributeIds.BrowseName
             })
-            if (readResult.statusCode.value === StatusCodes.Good.value) {
+            if (isStatusCodeGoodish(readResult.statusCode)) {
                 if ((readResult.value.value as QualifiedName).name === "MachineryBuildingBlocks") {
                     const typeDefinitionBrowseResult = await this.session.browse({
                         nodeId: componentId,
@@ -354,7 +359,7 @@ export class UaMachineryMachine {
                         browseDirection: BrowseDirection.Forward,
                         referenceTypeId: ReferenceTypeIds.HasAddIn
                     } as BrowseDescriptionLike)
-                    if (blocksBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                    if (isStatusCodeGoodish(blocksBrowseResults.statusCode)) {
                         for (let index = 0; index < blocksBrowseResults.references!.length; index++) {
                             // TODO might be Component/Identification/... aswell!
                             const addinId = blocksBrowseResults.references![index].nodeId;
@@ -371,12 +376,13 @@ export class UaMachineryMachine {
                                 nodeId: typeDefinitionBrowseResult.references![0].nodeId,
                                 attributeId: AttributeIds.DisplayName
                             })
+                            // TODO early exit here if not from type!
                             const stateMachineBrowseResults = await this.session.browse({
                                 nodeId: addinId,
                                 browseDirection: BrowseDirection.Forward,
                                 referenceTypeId: ReferenceTypeIds.HasComponent
                             } as BrowseDescriptionLike)
-                            if (stateMachineBrowseResults.statusCode.value === StatusCodes.Good.value) {
+                            if (isStatusCodeGoodish(stateMachineBrowseResults.statusCode)) {
                                 for (let index = 0; index < stateMachineBrowseResults.references!.length; index++) {
                                     const id = makeNodeIdStringFromExpandedNodeId(stateMachineBrowseResults.references![index].nodeId)
                                     const readDisplayNameResult = await this.session.read({

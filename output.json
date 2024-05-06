@@ -5,7 +5,7 @@
         "ServiceLevel": 255,
         "ServerStatus": {
             "StartTime": "2024-05-03T11:49:34.565Z",
-            "CurrentTime": "2024-05-03T14:32:51.636Z",
+            "CurrentTime": "2024-05-06T08:56:14.031Z",
             "State": 0,
             "BuildInfo": {
                 "ProductUri": "SampleServer-productUri",
@@ -633,7 +633,7 @@
             },
             "Components": [],
             "MachineryItemState": "Executing",
-            "MachineryOperationMode": "Processing",
+            "MachineryOperationMode": "Setup",
             "Monitoring": []
         },
         {
@@ -679,7 +679,7 @@
                             "DisplayName": "AnalogSignal",
                             "BrowseName": "36:AnalogSignal",
                             "Description": "The process value.",
-                            "Value": 99.63576135933303
+                            "Value": 88.50543209073676
                         },
                         "EURange": null,
                         "EngineeringUnit": null
@@ -714,7 +714,7 @@
                             "DisplayName": "AnalogSignal",
                             "BrowseName": "36:AnalogSignal",
                             "Description": "The process value.",
-                            "Value": 565.9754020859244
+                            "Value": 602.4736648865978
                         },
                         "EURange": null,
                         "EngineeringUnit": null
