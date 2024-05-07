@@ -129,7 +129,7 @@ let userIdentityInfo: UserIdentityInfo = {
     type: UserTokenType.Anonymous
 }
 
-export class OpcUaDeviceClass extends EventEmitter {
+export class OpcUaDeviceProxyClass extends EventEmitter {
 
     readonly endpoint: string
     readonly client: OPCUAClient
@@ -605,6 +605,22 @@ export class OpcUaDeviceClass extends EventEmitter {
                 for (let index = 0; index < changes.length; index++) {
                     const change = changes[index];
                     const nodeId = change.affected.toString()
+                    const verb: number = change.verb // The verb is an 8-bit unsigned integer used as bit mask
+                    if ((verb & 0x00000001) === 0x00000001) {
+                        // NodeAdded
+                    }
+                    if ((verb & 0x00000010) === 0x00000010) {
+                        // NodeDeleted
+                    }
+                    if ((verb & 0x00000100) === 0x00000100) {
+                        // ReferenceAdded
+                    }
+                    if ((verb & 0x00001000) === 0x00001000) {
+                        // ReferenceDeleted
+                    }
+                    if ((verb & 0x00010000) === 0x00010000) {
+                        // DataTypeChanged
+                    }
                     const item = this._relatedNodeIdMap.get(nodeId)
                     if (item !== undefined) {
                         toBeInitialized.add(item)

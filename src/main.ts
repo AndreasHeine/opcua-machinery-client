@@ -1,8 +1,8 @@
-import { OpcUaDeviceClass } from "./ua-device";
+import { OpcUaDeviceProxyClass } from "./ua-device";
 
-const UaDevice = new OpcUaDeviceClass("opc.tcp://opcua.umati.app:4843")
-// const UaDevice = new OpcUaDeviceClass("opc.tcp://opcua.umati.app:4840")
-// const UaDevice = new OpcUaDeviceClass("opc.tcp://127.0.0.1:4840")
+const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4843")
+// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4840")
+// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://127.0.0.1:4840")
 
 ;(async () => {
     function shutdown() {
