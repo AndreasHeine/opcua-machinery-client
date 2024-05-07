@@ -25,27 +25,27 @@ export class UaMachineryMachine {
     /**
      * Attributes of the Machine-Instance-Object e.g. DisplayName, BrowseName and Description
      */
-    attributes: Map<string, any> = new Map()
+    readonly attributes: Map<string, any> = new Map()
 
     /**
      * Additional References of the Machine-Instance-Object e.g. TypeDefinition
      */
-    references: Map<string, any> = new Map()
+    readonly references: Map<string, any> = new Map()
 
     /**
      * A Map of all the found Identification-Properties
      */
-    identification: Map<string, any> = new Map()
+    readonly identification: Map<string, any> = new Map()
 
     /**
      * A Map of all the found MachineryComponents
      */    
-    components: Map<string, UaMachineryComponent> = new Map()
+    readonly components: Map<string, UaMachineryComponent> = new Map()
 
     /**
      * A Map of all the found MachineryProcessValues
      */    
-    monitoring: Map<string, UaProcessValue> = new Map()
+    readonly monitoring: Map<string, UaProcessValue> = new Map()
 
     /**
      * Value of CurrentState-Variable of the MachineryItemState_StateMachine

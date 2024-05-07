@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events';
 import { 
     OPCUAClient,
     OPCUAClientOptions,
@@ -33,6 +32,7 @@ import { writeJson } from 'fs-extra';
 import { UaMachineryMachine } from './ua-machine';
 import { UaMachineryComponent } from './ua-machine-component';
 import { UaProcessValue } from './ua-processvalue';
+import { clearInterval } from 'timers';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -129,7 +129,7 @@ let userIdentityInfo: UserIdentityInfo = {
     type: UserTokenType.Anonymous
 }
 
-export class OpcUaDeviceProxyClass extends EventEmitter {
+export class OpcUaDeviceProxyClass {
 
     readonly endpoint: string
     readonly client: OPCUAClient
@@ -153,9 +153,10 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
     private _queuedBaseModelChangeEvents: Variant[][] = []
     private _queuedGeneralModelChangeEvents: Variant[][] = []
     private _queuedSemanticChangeEvents: Variant[][] = []
+    private findMachinesOnServerInterval: NodeJS.Timeout | undefined
+    private updateSummeryInterval: NodeJS.Timeout | undefined
 
     constructor (endpoint: string) {
-        super()
         this.endpoint = endpoint
         this.client = OPCUAClient.create(optionsInitial)
         this.client.on("backoff", (retry: number, delay: number) => {
@@ -217,11 +218,11 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         return this._reinitializing
     }
 
-    isConnected(): boolean {
+    private isConnected(): boolean {
         return this.client.isReconnecting === false ? true : false
     }
 
-    isSessionPresent(): boolean {
+    private isSessionPresent(): boolean {
         if (this.session !== undefined) {
             return this.session!.isReconnecting === false ? true : false
         } else {
@@ -376,7 +377,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         ) {
             await this.processQueuedChangeEvents()
         }
-        setInterval(async () => {
+        this.findMachinesOnServerInterval = setInterval(async () => {
             if (this.isConnected() === false) return
             if (this.isSessionPresent() === false) return
             await this.findMachinesOnServer()
@@ -390,7 +391,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         }, 60 * 1000)
     }
 
-    updateSummery() {
+    private updateSummery() {
         Object.assign(this.summery, {
             Server: {
                 Endpoint: this.endpoint,
@@ -419,7 +420,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         })
     }
 
-    collectRelatedNodeIds() {
+    private collectRelatedNodeIds() {
         this._relatedNodeIdMap.clear()
         const machines = Array.from(this.machines.values())
         for (let index = 0; index < machines.length; index++) {
@@ -447,7 +448,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's`)
     }
 
-    collectRelatedVariableNodeIds() {
+    private collectRelatedVariableNodeIds() {
         this._relatedVariableNodeIds.clear()
         const machines = Array.from(this.machines.values())
         for (let index = 0; index < machines.length; index++) {
@@ -473,7 +474,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         console.log(`OPC UA Client: contains '${this._relatedVariableNodeIds.size}' related Variable/Property-NodeId's`)
     }
 
-    async processQueuedChangeEvents() {
+    private async processQueuedChangeEvents() {
         console.log(`OPC UA Client: processing queued ChangeEvents [Base=${this._queuedBaseModelChangeEvents.length},General=${this._queuedGeneralModelChangeEvents.length},Semantic=${this._queuedSemanticChangeEvents.length}]`)
         const machines = Array.from(this.machines.values())
         if (this._queuedBaseModelChangeEvents.length > 0) {
@@ -495,6 +496,11 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         }
     }
 
+    private clearAllIntervals() {
+        if (this.updateSummeryInterval !== undefined) clearInterval(this.updateSummeryInterval)
+        if (this.findMachinesOnServerInterval !== undefined) clearInterval(this.findMachinesOnServerInterval!)
+    }
+
     async disconnect() {
         console.log(`OPC UA Client: terminating Subscription!`)
         await this.subscription?.terminate()
@@ -502,6 +508,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         await this.session?.close()
         console.log(`OPC UA Client: diconnecting!`)
         await this.client.disconnect()
+        this.clearAllIntervals()
     }
 
     async reinitialize() {
@@ -783,7 +790,7 @@ export class OpcUaDeviceProxyClass extends EventEmitter {
         console.log(`OPC UA Client: done loading MetaData!`)
         this.updateSummery()
         await writeJson("output.json", this.summery, {spaces: '    '})
-        setInterval(async () => {
+        this.updateSummeryInterval = setInterval(async () => {
             if (this.isConnected() === false) return
             if (this.isSessionPresent() === false) return
             this.updateSummery()

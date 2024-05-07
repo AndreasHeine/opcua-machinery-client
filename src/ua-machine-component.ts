@@ -22,17 +22,17 @@ export class UaMachineryComponent {
     /**
      * Attributes of the MachineComponent-Instance-Object e.g. DisplayName, BrowseName and Description
      */
-    attributes: Map<string, any> = new Map()
+    readonly attributes: Map<string, any> = new Map()
 
     /**
      * Additional References of the MachineComponent-Instance-Object e.g. TypeDefinition
      */
-    references: Map<string, any> = new Map()
+    readonly references: Map<string, any> = new Map()
 
     /**
      * A Map of all the found Identification-Properties
      */
-    identification: Map<string, any> = new Map()
+    readonly identification: Map<string, any> = new Map()
 
     /**
      * Last known initialization Date

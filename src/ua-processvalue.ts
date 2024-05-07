@@ -53,12 +53,12 @@ export class UaProcessValue {
     /**
      * Attributes of the Machine-Instance-Object e.g. DisplayName, BrowseName and Description
      */
-    attributes: Map<string, any> = new Map()
+    readonly attributes: Map<string, any> = new Map()
 
     /**
      * Additional References of the Machine-Instance-Object e.g. TypeDefinition
      */
-    references: Map<string, any> = new Map()
+    readonly references: Map<string, any> = new Map()
 
     /**
      * A Set of known NodeId's associated with this class-instance
