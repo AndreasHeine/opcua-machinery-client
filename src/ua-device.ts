@@ -23,6 +23,8 @@ import {
     ChannelSecurityToken,
     NotificationMessage,
     ReadValueIdOptions,
+    ServerStatusDataType,
+    MonitoringMode,
 } from 'node-opcua'
 import { 
     isStatusCodeGoodish,
@@ -140,16 +142,16 @@ export class OpcUaDeviceProxyClass {
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
-    private serverStatus: any = {}
+    private serverStatus: ServerStatusDataType | null = null
     private serviceLevel: number = 0
     private deviceLimits: Map<string, any> = new Map()
-    private foundMachines = new Set<string>()
-    private machines: Map<string, any> = new Map()
-    private summery = Object.create({})
+    private foundMachines: Set<string> = new Set<string>()
+    private machines: Map<string, UaMachineryMachine> = new Map()
+    private summery: object = Object.create({})
     private _reinitializing: boolean = false
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent | UaProcessValue> = new Map()
-    private _relatedVariableNodeIds = new Set<string>()
-    private _initialized = false
+    private _relatedVariableNodeIds: Set<string> = new Set<string>()
+    private _initialized: boolean = false
     private _queuedBaseModelChangeEvents: Variant[][] = []
     private _queuedGeneralModelChangeEvents: Variant[][] = []
     private _queuedSemanticChangeEvents: Variant[][] = []
@@ -398,19 +400,19 @@ export class OpcUaDeviceProxyClass {
                 ServerState: this.serverState,
                 ServiceLevel: this.serviceLevel,
                 ServerStatus: {
-                    StartTime: this.serverStatus.startTime,
-                    CurrentTime: this.serverStatus.currentTime,
-                    State: this.serverStatus.state,
+                    StartTime: this.serverStatus?.startTime || null,
+                    CurrentTime: this.serverStatus?.currentTime || null,
+                    State: this.serverStatus?.state || null,
                     BuildInfo: {
-                        ProductUri: this.serverStatus.buildInfo.productUri,
-                        ManufacturerName: this.serverStatus.buildInfo.manufacturerName,
-                        ProductName: this.serverStatus.buildInfo.productName,
-                        SoftwareVersion: this.serverStatus.buildInfo.softwareVersion,
-                        BuildNumber: this.serverStatus.buildInfo.buildNumber,
-                        BuildDate: this.serverStatus.buildInfo.buildDate
+                        ProductUri: this.serverStatus?.buildInfo.productUri || null,
+                        ManufacturerName: this.serverStatus?.buildInfo.manufacturerName || null,
+                        ProductName: this.serverStatus?.buildInfo.productName || null,
+                        SoftwareVersion: this.serverStatus?.buildInfo.softwareVersion || null,
+                        BuildNumber: this.serverStatus?.buildInfo.buildNumber || null,
+                        BuildDate: this.serverStatus?.buildInfo.buildDate || null
                     },
-                    SecondsTillShutdown: this.serverStatus.secondsTillShutdown,
-                    ShutdownReason: `${this.serverStatus.shutdownReason.text}`
+                    SecondsTillShutdown: this.serverStatus?.secondsTillShutdown || null,
+                    ShutdownReason: `${this.serverStatus?.shutdownReason.text}` || null
                 },
                 NamespaceArray: this.namespaceArray,
                 ServerProfileArray: this.serverProfileArray,
@@ -615,18 +617,23 @@ export class OpcUaDeviceProxyClass {
                     const verb: number = change.verb // The verb is an 8-bit unsigned integer used as bit mask
                     if ((verb & 0x00000001) === 0x00000001) {
                         // NodeAdded
+                        console.warn(`OPC UA Client: NodeId='${nodeId}' has been added!`)
                     }
                     if ((verb & 0x00000010) === 0x00000010) {
                         // NodeDeleted
+                        console.warn(`OPC UA Client: NodeId='${nodeId}' has been deleted!`)
                     }
                     if ((verb & 0x00000100) === 0x00000100) {
                         // ReferenceAdded
+                        console.warn(`OPC UA Client: NodeId='${nodeId}' a Reference has been added!`)
                     }
                     if ((verb & 0x00001000) === 0x00001000) {
                         // ReferenceDeleted
+                        console.warn(`OPC UA Client: NodeId='${nodeId}' a Reference has been deleted!`)
                     }
                     if ((verb & 0x00010000) === 0x00010000) {
                         // DataTypeChanged
+                        console.warn(`OPC UA Client: NodeId='${nodeId}' datatype has been changed!`)
                     }
                     const item = this._relatedNodeIdMap.get(nodeId)
                     if (item !== undefined) {
@@ -646,9 +653,26 @@ export class OpcUaDeviceProxyClass {
         }
         if (changesOccurred === true) {
             this.collectRelatedNodeIds()
-            // const oldVariableNodeIds = this._relatedVariableNodeIds
             this.collectRelatedVariableNodeIds()
-            // TODO Update Subscription!
+            const subscribedNodeIds = Array.from(this.monitoredItemValueMap.keys())
+            const nodeids = Array.from(this._relatedVariableNodeIds)
+            for (let index = 0; index < nodeids.length; index++) {
+                const id = nodeids[index];
+                if (subscribedNodeIds.includes(id) === false) {
+                    await this.subscription!.monitor(
+                        {
+                            nodeId: id,
+                            attributeId: AttributeIds.Value
+                        },
+                        {
+                            samplingInterval: 2000,
+                            queueSize: 1000
+                        },
+                        TimestampsToReturn.Both,
+                        MonitoringMode.Reporting
+                    )
+                }
+            }
         }
     }
 
