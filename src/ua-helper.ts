@@ -39,6 +39,7 @@ export const isStatusCodeGoodish = function (st: StatusCode): boolean {
             return true
             break
         default:
+            console.log(`OPC-UA-Client: Unexpected StatusCode received '${st.toString()}'`)
             return false
             break
     }
@@ -102,7 +103,7 @@ export const makeExpandedNodeIdFromString = function (str: string, namespaceArra
         namespaceindex = namespaceArray.indexOf(uri)
     }
     if (uri === null) {
-        throw new Error(`OPC-UA-Server: makeExpandedNodeIdFromString - Could not parse string: ${str}`)
+        throw new Error(`OPC-UA-Client: makeExpandedNodeIdFromString - Could not parse string: ${str}`)
     }
     const nid = new NodeId(type, identifier, namespaceindex)
     return ExpandedNodeId.fromNodeId(nid, uri, serverIndex)
