@@ -4,7 +4,6 @@ import {
     ClientSession,
     CreateSubscriptionRequestOptions,
     UserIdentityInfo,
-    UserTokenType,
     DataValue,
     StatusCode,
     AttributeIds,
@@ -127,17 +126,15 @@ const createSubscriptionRequest: CreateSubscriptionRequestOptions = {
     // priority: 1,
 }
 
-let userIdentityInfo: UserIdentityInfo = {
-    type: UserTokenType.Anonymous
-}
-
 export class OpcUaDeviceProxyClass {
 
     readonly endpoint: string
     readonly client: OPCUAClient
+    readonly userIdentityInfo: UserIdentityInfo
 
     private session: ClientSession | undefined
     private subscription: ClientSubscription | undefined
+
     private monitoredItemValueMap: Map<string, ClientMonitoredItem> = new Map()
     private namespaceArray: string[] = []
     private serverProfileArray: string[] = []
@@ -158,8 +155,9 @@ export class OpcUaDeviceProxyClass {
     private findMachinesOnServerInterval: NodeJS.Timeout | undefined
     private updateSummeryInterval: NodeJS.Timeout | undefined
 
-    constructor (endpoint: string) {
+    constructor (endpoint: string, userIdentityInfo: UserIdentityInfo) {
         this.endpoint = endpoint
+        this.userIdentityInfo = userIdentityInfo
         this.client = OPCUAClient.create(optionsInitial)
         this.client.on("backoff", (retry: number, delay: number) => {
             console.warn(`OPC UA Client: unable to connect to the OPC UA Device @ '${endpoint}' - attempt '${retry}' retrying in '${delay / 1000.0}' seconds`)
@@ -316,7 +314,7 @@ export class OpcUaDeviceProxyClass {
 
     async initialize() {
         await this.client.connect(this.endpoint)
-        await this.createSession(userIdentityInfo)
+        await this.createSession(this.userIdentityInfo)
         await this.readServerState()
         if (this.serverState > 0) {
             console.error(`OPC UA Client: OPC UA Device @ '${this.endpoint}' has invalid ServerState '${this.serverState}'`)
