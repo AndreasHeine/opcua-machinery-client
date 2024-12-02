@@ -32,3 +32,10 @@
 :x: The user would like to access and set a substitution value in case of connections lost.  
 :x: The user would like to get identification information of devices providing process values.  
 :x: The user would like to get information about the health status of devices providing process values.  
+
+#### OPC 40001-3: Machinery Job Mgmt (https://reference.opcfoundation.org/Machinery/Jobs/v100/docs/)  
+5 Use Cases  
+:x: The user would like to provide job orders to a MachineryItem to get executed.  
+:x: The user would like to control job orders by updating the job order, setting the job order to get executed or revoke the execution, pause and resume the execution, and abort or stop the executing.  
+:x: The user would like to get information about the state of execution, retrieve intermediate results and the end result of the job order execution.  
+:x: The user would like to delete the job order results from the MachineryItem after execution and receiving the job order.   
