@@ -1,9 +1,9 @@
 import { UserTokenType } from "node-opcua";
 import { OpcUaDeviceProxyClass } from "./ua-device";
 
-// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4843", { type: UserTokenType.Anonymous })
+const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4843", { type: UserTokenType.Anonymous })
 // const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4840", { type: UserTokenType.Anonymous })
-const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://127.0.0.1:4840", { type: UserTokenType.Anonymous })
+// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://127.0.0.1:4840", { type: UserTokenType.Anonymous })
 
 ;(async () => {
     function shutdown() {
