@@ -305,7 +305,16 @@ export class UaMachineryMachine {
                         referenceTypeId: ReferenceTypeIds.HasComponent
                     } as BrowseDescriptionLike)
                     if (isStatusCodeGoodish(monitoringBrowseResults.statusCode)) {
-                        if (this.namespaceArray.includes("http://opcfoundation.org/UA/Machinery/ProcessValues/")) {
+                        const allowedHosts = ["opcfoundation.org"];
+                        const isAllowedNamespace = this.namespaceArray.some(namespace => {
+                            try {
+                                const url = new URL(namespace);
+                                return allowedHosts.includes(url.host);
+                            } catch (e) {
+                                return false;
+                            }
+                        });
+                        if (isAllowedNamespace) {
                             for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
                                 const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
                                 await this.loadProcessValue(id)
