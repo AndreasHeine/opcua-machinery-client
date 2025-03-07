@@ -305,7 +305,15 @@ export class UaMachineryMachine {
                         referenceTypeId: ReferenceTypeIds.HasComponent
                     } as BrowseDescriptionLike)
                     if (isStatusCodeGoodish(monitoringBrowseResults.statusCode)) {
-                        if (this.namespaceArray.includes("http://opcfoundation.org/UA/Machinery/ProcessValues/")) {
+                        const isAllowedNamespace = this.namespaceArray.some(namespace => {
+                            try {
+                                const url = new URL(namespace);
+                                return url.host === "opcfoundation.org" && url.pathname === "/UA/Machinery/ProcessValues/";
+                            } catch (e) {
+                                return false;
+                            }
+                        });
+                        if (isAllowedNamespace) {
                             for (let index = 0; index < monitoringBrowseResults.references!.length; index++) {
                                 const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults.references![index].nodeId);
                                 await this.loadProcessValue(id)
@@ -319,7 +327,15 @@ export class UaMachineryMachine {
                         referenceTypeId: ReferenceTypeIds.Organizes
                     } as BrowseDescriptionLike)
                     if (isStatusCodeGoodish(monitoringBrowseResults2.statusCode)) {
-                        if (this.namespaceArray.includes("http://opcfoundation.org/UA/Machinery/ProcessValues/")) {
+                        const isAllowedNamespace = this.namespaceArray.some(namespace => {
+                            try {
+                                const url = new URL(namespace);
+                                return url.host === "opcfoundation.org" && url.pathname === "/UA/Machinery/ProcessValues/";
+                            } catch (e) {
+                                return false;
+                            }
+                        });
+                        if (isAllowedNamespace) {
                             for (let index = 0; index < monitoringBrowseResults2.references!.length; index++) {
                                const id = makeNodeIdStringFromExpandedNodeId(monitoringBrowseResults2.references![index].nodeId);
                                await this.loadProcessValue(id)
