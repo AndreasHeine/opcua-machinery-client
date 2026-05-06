@@ -144,7 +144,7 @@ export class OpcUaDeviceProxyClass {
     private deviceLimits: Map<string, any> = new Map()
     private foundMachines: Set<string> = new Set<string>()
     private machines: Map<string, UaMachineryMachine> = new Map()
-    private summery: object = Object.create({})
+    private _summery: object = Object.create({})
     private _reinitializing: boolean = false
     private _relatedNodeIdMap: Map<string, UaMachineryMachine | UaMachineryComponent | UaProcessValue> = new Map()
     private _relatedVariableNodeIds: Set<string> = new Set<string>()
@@ -216,6 +216,10 @@ export class OpcUaDeviceProxyClass {
 
     get reinitializing() {
         return this._reinitializing
+    }
+
+    get summery() {
+        return this._summery
     }
 
     private isConnected(): boolean {
@@ -392,7 +396,7 @@ export class OpcUaDeviceProxyClass {
     }
 
     private updateSummery() {
-        Object.assign(this.summery, {
+        Object.assign(this._summery, {
             Server: {
                 Endpoint: this.endpoint,
                 ServerState: this.serverState,
@@ -811,12 +815,12 @@ export class OpcUaDeviceProxyClass {
         }
         console.log(`OPC UA Client: done loading MetaData!`)
         this.updateSummery()
-        await writeJson("output.json", this.summery, {spaces: '    '})
+        await writeJson("output.json", this._summery, {spaces: '    '})
         this.updateSummeryInterval = setInterval(async () => {
             if (this.isConnected() === false) return
             if (this.isSessionPresent() === false) return
             this.updateSummery()
-            await writeJson("output.json", this.summery, {spaces: '    '})
+            await writeJson("output.json", this._summery, {spaces: '    '})
             console.log("OPC UA Client: 'output.json' got updated!")
         }, 10000)
     }

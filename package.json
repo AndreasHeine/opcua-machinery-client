@@ -11,11 +11,13 @@
   "license": "ISC",
   "dependencies": {
     "@types/fs-extra": "^11.0.4",
+    "express": "^5.1.0",
     "fs-extra": "^11.2.0",
     "node-opcua": "2.164.2"
   },
   "devDependencies": {
     "@types/async": "^3.2.15",
+    "@types/express": "^5.0.3",
     "@types/node": "24.10.13",
     "ts-node": "^10.9.1",
     "typescript": "5.9.3"

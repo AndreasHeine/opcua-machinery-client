@@ -65,6 +65,28 @@ Current default endpoint:
 
 You can replace it with your own OPC UA server endpoint.
 
+## REST API
+
+The application also starts a small HTTP server.
+
+Default address:
+
+- `http://localhost:3000`
+
+Available endpoints:
+
+- `GET /server` returns the current server information
+- `GET /machines` returns all discovered machines
+- `GET /machines?productInstanceUri=<value>` returns only machines with the matching `Identification.ProductInstanceUri`
+
+Example:
+
+```text
+http://localhost:3000/machines?productInstanceUri=https://umati.org/UA/instance/ShowCaseMachineTool-20240301-4711
+```
+
+The REST API reads directly from the in-memory OPC UA summary, so it does not need to reload `output.json` for each request.
+
 ## Current scope
 
 Implemented:
