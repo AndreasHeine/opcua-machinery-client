@@ -192,7 +192,7 @@ export class OpcUaDeviceProxyClass {
         this.client.on("receive_chunk", () => {
             // too noisy
         })
-        this.client.on("receive_response", (response: Response) => {
+        this.client.on("receive_response", () => {
             // too noisy
             // console.log(`OPC UA Client: response='${response}'`)
         })
@@ -202,14 +202,14 @@ export class OpcUaDeviceProxyClass {
         this.client.on("send_chunk", () => {
             // too noisy
         })
-        this.client.on("send_request", (request: Request) => {
+        this.client.on("send_request", () => {
             // too noisy
             // console.log(`OPC UA Client: request='${request}'`)
         })
         this.client.on("start_reconnection", () => {
             console.log(`OPC UA Client: start reconnection!`)
         })
-        this.client.on("timed_out_request", (request: Request) => {
+        this.client.on("timed_out_request", (request: any) => {
             console.warn(`OPC UA Client: request timed out! request='${request}'`)
         })
     }
