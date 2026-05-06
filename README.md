@@ -1,41 +1,121 @@
 # opcua-machinery-client
 
-### A small Project to showcase the OPC UA for Machinery from the End-User perspective!
+A simple OPC UA Machinery client focused on end users.
 
-#### Functionalities
-* The Client connects to a OPC UA Server reads general Information like ServerState, ServiceLevel, NamespaceArray, ServerprofileArray, ServerStatus and OperationalLimits. After that it finds all Machineinstances in the Machines-Folder and discovers basic Attributes about the MachineinstanceObject like DisplayName, BrowseName, Description and explores the MachineIdentification as well as the machines Components and their ComponentIdentification. At the end an output.json will be created with the collected results of the OPC UA Server!
+## What this program does
 
-* The Client is aware of modelchanges due to "GeneralModelChangeEvents" and partially reinitializes the related Item (Machine-, MachineComponent- or ProcessValue-Instance)!
+This client connects to an OPC UA server and automatically discovers machines that follow the OPC UA Machinery model.
 
-* The Client automatically subscribes all variables / properties he finds and updates the output.json file every 10s with the latest data
+It then collects useful information, such as:
 
-### Roadmap [done: :heavy_check_mark:, not yet: :x:]:
+- Server health and capability information
+- List of available machines
+- Machine identification details
+- Machine components and component identification
+- Monitoring values (process values)
+- Machine state and operation mode (if available)
 
-#### OPC 40001-1: Machinery Basic Building Blocks (https://reference.opcfoundation.org/Machinery/v103/docs/5)
-5 Use Cases  
-:heavy_check_mark: 5.1 Machine Identification and Nameplate   
-:heavy_check_mark: 5.2 Finding all Machines in a Server    
-:heavy_check_mark: 5.3 Component Identification and Nameplate  
-:heavy_check_mark: 5.4 Finding all Components of a Machine    
-:heavy_check_mark: 5.5 Machine Monitoring  
-:x: 5.6 Preventive Maintenance  
+All collected data is written to `output.json` and refreshed every 10 seconds.
 
-#### OPC 40001-2: Machinery Process Values (https://reference.opcfoundation.org/Machinery/ProcessValues/v100/docs/5)
-5 Use Cases  
-:heavy_check_mark: The user would like to access the process values of a machine and its various meta data like ranges, precision and unit.  
-:x: The user would like to access and set the setpoints of the process values of a machine.  
-:x: The user would like to access and set deviation limits of the process values, relative to the setpoints.  
-:x: The user would like to get informed when a process value is passing a deviation limit or range.  
-:x: The user would like to get the percentage value of a process variable, also when there are dynamic ranges.  
-:x: The user would like to zero-point adjust the current value of a process value.  
-:x: The user would like to get vendor-specific error codes on devices providing process values.  
-:x: The user would like to access and set a substitution value in case of connections lost.  
-:x: The user would like to get identification information of devices providing process values.  
-:x: The user would like to get information about the health status of devices providing process values.  
+## Why this is useful for end users
 
-#### OPC 40001-3: Machinery Job Mgmt (https://reference.opcfoundation.org/Machinery/Jobs/v100/docs/)  
-5 Use Cases  
-:x: The user would like to provide job orders to a MachineryItem to get executed.  
-:x: The user would like to control job orders by updating the job order, setting the job order to get executed or revoke the execution, pause and resume the execution, and abort or stop the executing.  
-:x: The user would like to get information about the state of execution, retrieve intermediate results and the end result of the job order execution.  
-:x: The user would like to delete the job order results from the MachineryItem after execution and receiving the job order.   
+This project is useful when you want a clear, ready-to-use view of machine data without manually browsing an OPC UA address space.
+
+Main benefits:
+
+- Quick onboarding: see machine data in one JSON file
+- Easy integration: `output.json` can be consumed by scripts, dashboards, or data pipelines
+- Live updates: values are subscribed and updated continuously
+- Better reliability: reconnect and model-change handling are built in
+
+In short, it turns a complex OPC UA server structure into a simple, machine-readable snapshot for operations, diagnostics, and integration work.
+
+## How it works (in plain language)
+
+1. Connects to the OPC UA endpoint.
+2. Reads server status and limits.
+3. Finds machine instances in the Machinery folder.
+4. Discovers metadata, components, and monitoring values.
+5. Subscribes to value changes.
+6. Writes and refreshes `output.json` every 10 seconds.
+
+## Quick start
+
+### Requirements
+
+- Node.js 18+
+- npm
+
+### Install and run
+
+```bash
+npm install
+npm start
+```
+
+After startup, check `output.json` in the project root.
+
+## Configuration
+
+The server endpoint is configured in `src/main.ts`.
+
+Current default endpoint:
+
+- `opc.tcp://opcua.umati.app:4843`
+
+You can replace it with your own OPC UA server endpoint.
+
+## Current scope
+
+Implemented:
+
+- Machine discovery
+- Machine and component identification
+- Process value monitoring (read)
+- Automatic JSON export
+- Partial handling of model changes
+
+Not implemented yet:
+
+- Writing setpoints
+- Deviation/alarm workflows
+- Job management features
+
+## Roadmap
+
+Status legend: [x] done, [ ] not yet
+
+### OPC 40001-1: Machinery Basic Building Blocks
+
+Reference: https://reference.opcfoundation.org/Machinery/v103/docs/5
+
+- [x] 5.1 Machine Identification and Nameplate
+- [x] 5.2 Finding all Machines in a Server
+- [x] 5.3 Component Identification and Nameplate
+- [x] 5.4 Finding all Components of a Machine
+- [x] 5.5 Machine Monitoring
+- [ ] 5.6 Preventive Maintenance
+
+### OPC 40001-2: Machinery Process Values
+
+Reference: https://reference.opcfoundation.org/Machinery/ProcessValues/v100/docs/5
+
+- [x] Access process values and selected metadata
+- [ ] Access and set process value setpoints
+- [ ] Access and set deviation limits relative to setpoints
+- [ ] Notify when process value exceeds deviation limit or range
+- [ ] Access percentage value with dynamic ranges
+- [ ] Zero-point adjustment of process values
+- [ ] Vendor-specific error codes for process value devices
+- [ ] Access and set substitution value for connection loss
+- [ ] Identification information of process value devices
+- [ ] Health status information of process value devices
+
+### OPC 40001-3: Machinery Job Management
+
+Reference: https://reference.opcfoundation.org/Machinery/Jobs/v100/docs/
+
+- [ ] Provide job orders to a MachineryItem
+- [ ] Control job orders (update, start, revoke, pause, resume, abort, stop)
+- [ ] Retrieve execution state, intermediate results, and final result
+- [ ] Delete job order results after execution
