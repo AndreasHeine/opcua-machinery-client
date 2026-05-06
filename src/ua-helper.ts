@@ -4,9 +4,6 @@ import {
     NodeIdType,
     StatusCode,
     StatusCodes,
-    // makeBrowsePath,
-    // makeRelativePath,
-    // assert
 } from 'node-opcua'
 
 export const isExpandedNodeId = function (str: string): boolean {
