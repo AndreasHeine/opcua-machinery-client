@@ -55,6 +55,29 @@ npm start
 
 After startup, check `output.json` in the project root.
 
+### Run with Docker
+
+Build the image:
+
+```bash
+docker build -t opcua-machinery-client .
+```
+
+Start the container:
+
+```bash
+docker run --rm -p 3000:3000 opcua-machinery-client
+```
+
+If you want to persist the generated JSON file on the host, mount the project folder or a dedicated target path:
+
+```bash
+touch output.json
+docker run --rm -p 3000:3000 -v "$PWD/output.json:/app/output.json" opcua-machinery-client
+```
+
+The application inside the container still connects to the OPC UA endpoint configured in `src/main.ts`.
+
 ## Configuration
 
 The server endpoint is configured in `src/main.ts`.
