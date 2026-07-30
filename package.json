@@ -15,7 +15,7 @@
     "@types/fs-extra": "^11.0.4",
     "express": "^5.1.0",
     "fs-extra": "^11.2.0",
-    "node-opcua": "2.173.1"
+    "node-opcua": "2.175.6"
   },
   "devDependencies": {
     "@types/async": "^3.2.15",
