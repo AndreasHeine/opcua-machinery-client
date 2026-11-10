@@ -34,6 +34,7 @@ import { UaMachineryMachine } from './ua-machine';
 import { UaMachineryComponent } from './ua-machine-component';
 import { UaProcessValue } from './ua-processvalue';
 import { clearInterval } from 'timers';
+import { config, log } from './config';
 
 const optionsInitial: OPCUAClientOptions = {
     //     /**
@@ -99,7 +100,7 @@ const optionsInitial: OPCUAClientOptions = {
     clientName: `opcua-machinery-client-${new Date().valueOf()}`,
     endpointMustExist: false,
 
-    requestedSessionTimeout: 30*60*1000,
+    requestedSessionTimeout: config.requestTimeoutMs,
     keepSessionAlive: true,
     keepPendingSessionsOnDisconnect: false,
 
@@ -120,7 +121,7 @@ const createSubscriptionRequest: CreateSubscriptionRequestOptions = {
     //     publishingEnabled?: UABoolean;
     //     priority?: Byte;
     // }
-    requestedPublishingInterval: 5000,
+    requestedPublishingInterval: config.publishingIntervalMs,
     maxNotificationsPerPublish: 10000,
     publishingEnabled: true,
     // priority: 1,
@@ -309,7 +310,7 @@ export class OpcUaDeviceProxyClass {
                 }
             ],
             {
-                samplingInterval: 5000,
+                samplingInterval: config.serverSamplingIntervalMs,
                 queueSize: 1
             },
             TimestampsToReturn.Both
@@ -326,7 +327,7 @@ export class OpcUaDeviceProxyClass {
             console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
             setTimeout(async () => {
                 await this.initialize()
-            }, 10000)
+            }, config.initRetryDelayMs)
             return
         }
         await this.readServiceLevel()
@@ -336,7 +337,7 @@ export class OpcUaDeviceProxyClass {
             console.warn(`OPC UA Client: next attempt to connect to OPC UA Device @ '${this.endpoint}' in 10s`)
             setTimeout(async () => {
                 await this.initialize()
-            }, 10000)
+            }, config.initRetryDelayMs)
             return
         }
         await this.readServerStatus()
@@ -354,7 +355,7 @@ export class OpcUaDeviceProxyClass {
         const maxPerSub = this.deviceLimits.get("MaxMonitoredItemsPerSubscription") || 0
         if (
             (maxPerCall === 0 || maxPerCall >= this._relatedVariableNodeIds.size) &&
-            (maxPerSub === 0 || (maxPerSub - 10) >= this._relatedVariableNodeIds.size)
+            (maxPerSub === 0 || (maxPerSub - config.subscriptionSlack) >= this._relatedVariableNodeIds.size)
         ) {
             console.log(`OPC UA Client: adding all '${this._relatedVariableNodeIds.size}' realated Variables and Properties to Subscription!`)
             await this.subscription!.monitorItems(
@@ -365,7 +366,7 @@ export class OpcUaDeviceProxyClass {
                     } as ReadValueIdOptions
                 }), 
                 {
-                    samplingInterval: 2000,
+                    samplingInterval: config.samplingIntervalMs,
                     queueSize: 1000
                 }, 
                 TimestampsToReturn.Both
@@ -392,7 +393,7 @@ export class OpcUaDeviceProxyClass {
                     await this.discoverSingleMachine(machineId)
                 }
             }
-        }, 60 * 1000)
+        }, config.rescanIntervalMs)
     }
 
     private updateSummery() {
@@ -667,7 +668,7 @@ export class OpcUaDeviceProxyClass {
                             attributeId: AttributeIds.Value
                         },
                         {
-                            samplingInterval: 2000,
+                            samplingInterval: config.samplingIntervalMs,
                             queueSize: 1000
                         },
                         TimestampsToReturn.Both,
@@ -815,14 +816,14 @@ export class OpcUaDeviceProxyClass {
         }
         console.log(`OPC UA Client: done loading MetaData!`)
         this.updateSummery()
-        await writeJson("output.json", this._summery, {spaces: '    '})
+        await writeJson(config.outputFile, this._summery, {spaces: '    '})
         this.updateSummeryInterval = setInterval(async () => {
             if (this.isConnected() === false) return
             if (this.isSessionPresent() === false) return
             this.updateSummery()
-            await writeJson("output.json", this._summery, {spaces: '    '})
-            console.log("OPC UA Client: 'output.json' got updated!")
-        }, 10000)
+            await writeJson(config.outputFile, this._summery, {spaces: '    '})
+            console.log(`OPC UA Client: '${config.outputFile}' got updated!`)
+        }, config.refreshIntervalMs)
     }
 
     private async findMachinesOnServer() {

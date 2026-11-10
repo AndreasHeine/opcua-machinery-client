@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc",
     "update:node-opcua": "npx rimraf node_modules && npx -y npm-check-updates -u -f \"node-opcua*\" && npm install",
-    "start": "ts-node src/main.ts",
-    "start:prod": "node dst/main.js"
+    "start": "npm run build && node dst/src/main.js",
+    "start:prod": "node dst/src/main.js"
   },
   "author": "",
   "license": "ISC",

@@ -1,20 +1,18 @@
-import { UserTokenType } from "node-opcua";
+import { config, log } from "./config";
 import { OpcUaDeviceProxyClass } from "./ua-device";
 import { startHttpServer } from "./http-server";
 
-const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4843", { type: UserTokenType.Anonymous })
-const httpServer = startHttpServer(() => UaDevice.summery, Number(process.env.PORT || 3000))
-// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://opcua.umati.app:4840", { type: UserTokenType.Anonymous })
-// const UaDevice = new OpcUaDeviceProxyClass("opc.tcp://127.0.0.1:4840", { type: UserTokenType.Anonymous })
+const UaDevice = new OpcUaDeviceProxyClass(config.endpoint, config.userIdentity)
+const httpServer = startHttpServer(() => UaDevice.summery, config.port)
 
 ;(async () => {
     function shutdown() {
-        console.log(`OPC UA Client: shutdown requested`)
+        log.info(`OPC UA Client: shutdown requested`)
         UaDevice.disconnect().then(() => {
             httpServer.close(() => {
-                console.warn('HTTP Server: shutdown completed')
+                log.warn('HTTP Server: shutdown completed')
             })
-            console.warn('OPC-UA-Client: shutdown completed')
+            log.warn('OPC-UA-Client: shutdown completed')
             process.exit(0)
         })
     }
@@ -22,10 +20,10 @@ const httpServer = startHttpServer(() => UaDevice.summery, Number(process.env.PO
     try {
         process.on('SIGINT', shutdown)
         process.on('SIGTERM', shutdown)
-        console.log('OPC-UA-Client: initializing...')
+        log.info(`OPC-UA-Client: initializing... endpoint='${config.endpoint}'`)
         await UaDevice.initialize()
     } catch (error: any) {
-        console.error(`OPC-UA-Client: error '${(error as Error).name}' message '${(error as Error).message}'`)
+        log.error(`OPC-UA-Client: error '${(error as Error).name}' message '${(error as Error).message}'`)
         process.exit(-1)
     }
 })()
@@ -36,7 +34,7 @@ const httpServer = startHttpServer(() => UaDevice.summery, Number(process.env.PO
     "unhandledRejection"
 ].forEach(event => {
     process.on(event, (...args: any[]) => {
-        console.error(`Something went wrong fix your application :P \n`, args)
+        log.error(`Something went wrong fix your application :P \n`, args)
         process.exit(1)
     })
 })
