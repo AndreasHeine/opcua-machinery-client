@@ -26,47 +26,75 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   models. All three share the same contract: `initialize()` (browse + read),
   `notify(nodeId, dataValue)` (fan-out from the single subscription's `changed` handler),
   `toJSON()` (the `output.json` / REST shape). New discovered data usually means touching all
-  three hooks plus `collectRelatedNodeIds()` / `collectRelatedVariableNodeIds()` in `ua-device.ts`.
+  three hooks plus `collectRelatedNodeIds()` / `collectRelatedVariableNodeIds()` /
+  `subscribeRelatedVariableNodeIds()` in `ua-device.ts`.
+- Spec registry (the single source of NodeIds and spec BrowseNames — models import from here instead
+  of inlining an identifier): `src/ua-spec.ts` (namespaces, core/Machinery TypeRefs, building blocks,
+  identification properties, server NodeIds, features), `src/ua-spec-processvalues.ts` (40001-2
+  tables), `src/ua-spec-jobs.ts` (40001-3, declared and used by the Phase 4 job model).
+- Shared OPC UA layers used by the models: `src/ua-types.ts` (`UaTypeResolver`: cached
+  `HasTypeDefinition` + inverse `HasSubtype` chain, `specNodeId()`, `match()`, `chainOf()`,
+  `chainOfNode()`, `namespaceIndexOf()`, `formatChain()`), `src/ua-browse.ts` (`UaRef` with canonical
+  NodeId strings, continuation-aware `browseChildren`, `browseComponents/Properties/AddIns/Organized/
+  HierarchicalChildren`, `browseChildByBrowseName`), `src/ua-read.ts` (`readAttributes`,
+  `readAttributeOfMany`, `readValue`, `normalizeValue`, `decodeRange`, `decodeEUInformation`,
+  `decodeEnumValues`). The resolver is created in `ua-device.initialize()` right after the
+  NamespaceArray read and passed into every model.
 - `src/ua-helper.ts` — NodeId <-> string conversion and status-code acceptance.
 - `src/http-server.ts` — `GET /server`, `GET /machines`, `GET /machines?productInstanceUri=`.
   Reads the in-memory summary via a getter callback; it does not read `output.json`.
 
 ## Gotchas that will bite you
 - **NodeId identity is a canonical string** (`ns=<index>;i=<n>`) produced by
-  `makeNodeIdStringFromExpandedNodeId()`. Those strings key `machines`, `monitoring`,
-  `_relatedNodeIds`, `_relatedVariableNodeIds`, `_dataStore`, and are matched against
-  `monitoredItem.itemToMonitor.nodeId.toString()` — which always includes the namespace, even for
-  namespace 0 (`ns=0;i=2256`). The one exception is `components` (`ua-machine.ts`): its map key is
-  the raw browse-result `ExpandedNodeId`, which stringifies as `ns=N;i=X;namespaceUri:<uri>` and
-  never matches the canonical form. Nothing calls `components.get()` today, so this is latent; add a
-  key lookup and it becomes a real bug. (`nsu=` only appears if you pass a `namespaceArray` option to
-  `NodeId.toString()`, which this code never does.)
-- Hardcoded OPC constants: namespace URIs `http://opcfoundation.org/UA/Machinery/` and
-  `.../Machinery/ProcessValues/` (discovery returns early if absent), Machines folder NodeId
-  `ns=<machineryIndex>;i=1001`, server variables `i=2256 / 2259 / 2267 / 2255 / 2269`, operational
-  limits `i=24098 / 24104 / 11714 / 11709 / 11705 / 11712 / 11707`.
-- TypeDefinition matching is by **DisplayName string** (`"ProcessValueType"`,
-  `"MachineryItemState_StateMachineType"`, `"MachineryOperationModeStateMachineType"` plus a few
-  vendor subtypes). `UaProcessValue.initialize()` uses `assert()` as its type filter — callers
-  rely on catching that as a warning, so don't remove the try/catch around discovery.
-- Loud startup logs are expected, not a bug. Against `opcua.umati.app:4843` the client finds 24
-  machines and prints many lines such as
-  `error while loading ProcessValue -> NodeId='ns=30;i=5018' with TypeDefinition='ChannelMonitoringType' !== 'ProcessValueType' skipping node!`
-  from that `assert()`. On that server only ~9 machines expose `MachineryItemState` and only 1 has
+  `makeNodeIdStringFromExpandedNodeId()` (it accepts `NodeId | ExpandedNodeId`, because
+  `ReferenceDescription.referenceTypeId` is typed as `NodeId`). Those strings key `machines`,
+  `components`, `monitoring`, `_relatedNodeIds`, `_relatedVariableNodeIds`, `_dataStore`, `children`,
+  and are matched against `monitoredItem.itemToMonitor.nodeId.toString()` — which always includes the
+  namespace, even for namespace 0 (`ns=0;i=2256`). Every browse helper in `ua-browse.ts` returns those
+  canonical strings in `UaRef.nodeId`; never key a map by a raw `ExpandedNodeId` (it stringifies as
+  `ns=N;i=X;namespaceUri:<uri>` and never matches). (`nsu=` only appears if you pass a
+  `namespaceArray` option to `NodeId.toString()`, which this code never does.)
+- **A browse request must set `resultMask`** (`ua-browse.ts` sends 63). Without it the demo server
+  answers with bare NodeIds — `browseName` null, `nodeClass` 0, `referenceTypeId` `ns=0;i=0` — so every
+  BrowseName/NodeClass filter silently matches nothing and the client ends up monitoring nothing.
+- `subscription.monitorItems([])` is always rejected with `BadNothingToDo (0x800f0000)`, which the init
+  path turns into a process exit. `OpcUaDeviceProxyClass.subscribeRelatedVariableNodeIds()` guards
+  against an empty set and chunks the rest below `MaxMonitoredItemsPerCall` /
+  `MaxMonitoredItemsPerSubscription` minus `SUBSCRIPTION_SLACK`.
+- Hardcoded OPC constants live in `src/ua-spec*.ts` (the only place NodeIds and spec BrowseNames are
+  declared): namespace URIs `http://opcfoundation.org/UA/Machinery/` and
+  `.../Machinery/ProcessValues/` (Monitoring discovery returns early if the ProcessValues namespace is
+  absent), Machines folder NodeId `ns=<machineryIndex>;i=1001`, server variables
+  `i=2256 / 2259 / 2267 / 2255 / 2269`, operational limits `i=24098 / 24104 / 11714 / 11709 / 11705 /
+  11712 / 11707`.
+- Type definition classification is by **`HasSubtype` chain** (`UaTypeResolver` in `ua-types.ts`), not by
+  DisplayName string: `HasTypeDefinition` is resolved once, cached, and the chain is compared against
+  the spec TypeRefs from `ua-spec*.ts`, so vendor subtypes such as
+  `MachineOperationModeStateMachineType [ns=5;i=1003] <- MachineryOperationModeStateMachineType
+  [ns=3;i=1008] <- ...` match. `UaProcessValue.classifyInstance()` **throws** when the chain does not
+  reach `ProcessValueType` — that throw is the filter contract: `UaMachineryMachine.loadProcessValue()`
+  catches it and logs a warning, so keep the try/catch around discovery.
+- Startup logs are noisy by design, not a bug. Against `opcua.umati.app:4843` the client finds 24
+  machines, prints one `Machine '<id>' type chain: ...` line per machine, and at `LOG_LEVEL=debug` about
+  28 lines such as
+  `Monitoring child 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType' is not a ProcessValueType,
+  reported as foreign type`. On that server only ~9 machines expose `MachineryItemState` and only 1 has
   `Monitoring` entries, so sparse output is normal. Verify a change by comparing
   `GET /machines` and `output.json` before/after, not by log silence.
-- Status-code acceptance is inconsistent between files: `isStatusCodeGoodish()` also accepts
-  several `Uncertain*` codes, while `ua-machine.ts` / `ua-machine-component.ts` /
-  `ua-processvalue.ts` often compare `statusCode.value === StatusCodes.Good.value`. Match the
-  surrounding file rather than "fixing" it globally.
+- Status codes: model files read through `ua-read.ts`, whose `DecodedValue.ok` is
+  `isStatusCodeGoodish()` (Good plus several `Uncertain*` codes), and `statusCodeIsUncertain` marks the
+  rest. `ua-device.ts` still mixes `isStatusCodeGoodish()` with direct
+  `statusCode.value === StatusCodes.Good.value` comparisons. Match the surrounding file rather than
+  "fixing" it globally.
 - The process exits on purpose: `uncaughtException`/`unhandledRejection` → `process.exit(1)`;
   init failure → `process.exit(-1)`; bad `ServerState` or `ServiceLevel <= 200` re-runs
   `initialize()` every 10s. Any new unhandled promise rejection can kill the app.
 - `output.json` is written with a relative path, so it lands in the **process CWD**, not the repo root.
-- Tuning lives at the top of `ua-device.ts`: `optionsInitial` (session timeout, keep-alive,
-  reconnect strategy) and `createSubscriptionRequest` (5000ms publishing interval). There is a
-  single subscription for everything, and the monitored-item capacity check reserves 10 slots
-  (`maxPerSub - 10`).
+- Tuning lives at the top of `ua-device.ts`: `optionsInitial` (session timeout, keep-alive, reconnect
+  strategy) and `createSubscriptionRequest` (publishing interval from `PUBLISHING_INTERVAL_MS`). There
+  is a single subscription for everything; `subscribeRelatedVariableNodeIds()` keeps monitored items
+  below `MaxMonitoredItemsPerCall` and `MaxMonitoredItemsPerSubscription - SUBSCRIPTION_SLACK` and
+  splits the request into `MAX_MONITORED_ITEMS_PER_REQUEST` chunks.
 
 ## Configuration and environment
 - All runtime config is env-driven via `src/config.ts` (`OPCUA_ENDPOINT`, `PORT`, `OUTPUT_FILE`,

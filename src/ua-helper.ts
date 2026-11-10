@@ -120,7 +120,7 @@ identifierTypes.set(2, 's')
 identifierTypes.set(3, 'g')
 identifierTypes.set(4, 'b')
 
-export const makeNodeIdStringFromExpandedNodeId = function (enid: ExpandedNodeId): string {
+export const makeNodeIdStringFromExpandedNodeId = function (enid: ExpandedNodeId | NodeId): string {
     // assert(enid.namespace != undefined, "makeNodeIdStringFromExpandedNodeId -> no namespace in ExpandedNodeId")
     // assert(enid.identifierType, "makeNodeIdStringFromExpandedNodeId -> no identifierType in ExpandedNodeId")
     // assert(enid.value, "makeNodeIdStringFromExpandedNodeId -> no value in ExpandedNodeId")

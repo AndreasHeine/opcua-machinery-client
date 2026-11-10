@@ -33,6 +33,7 @@ import { writeJson } from 'fs-extra';
 import { UaMachineryMachine } from './ua-machine';
 import { UaMachineryComponent } from './ua-machine-component';
 import { UaProcessValue } from './ua-processvalue';
+import { UaTypeResolver } from './ua-types';
 import { clearInterval } from 'timers';
 import { config, log } from './config';
 
@@ -138,6 +139,7 @@ export class OpcUaDeviceProxyClass {
 
     private monitoredItemValueMap: Map<string, ClientMonitoredItem> = new Map()
     private namespaceArray: string[] = []
+    private typeResolver: UaTypeResolver | undefined
     private serverProfileArray: string[] = []
     private serverState: number = ServerState.Unknown
     private serverStatus: ServerStatusDataType | null = null
@@ -342,6 +344,11 @@ export class OpcUaDeviceProxyClass {
         }
         await this.readServerStatus()
         await this.readNameSpaceArray()
+        /*
+         * The type resolver needs the namespace array to turn spec TypeRefs into real server NodeIds,
+         * so it is created after the NamespaceArray read and lives as long as the session does.
+         */
+        this.typeResolver = new UaTypeResolver(this.session!, this.namespaceArray)
         await this.readServerProfileArray()
         await this.readDeviceLimits()
         this.updateSummery()
@@ -351,29 +358,7 @@ export class OpcUaDeviceProxyClass {
         await this.discoverFoundMachines()
         this.collectRelatedNodeIds()
         this.collectRelatedVariableNodeIds()
-        const maxPerCall = this.deviceLimits.get("MaxMonitoredItemsPerCall") || 0
-        const maxPerSub = this.deviceLimits.get("MaxMonitoredItemsPerSubscription") || 0
-        if (
-            (maxPerCall === 0 || maxPerCall >= this._relatedVariableNodeIds.size) &&
-            (maxPerSub === 0 || (maxPerSub - config.subscriptionSlack) >= this._relatedVariableNodeIds.size)
-        ) {
-            console.log(`OPC UA Client: adding all '${this._relatedVariableNodeIds.size}' realated Variables and Properties to Subscription!`)
-            await this.subscription!.monitorItems(
-                Array.from(this._relatedVariableNodeIds.values()).map((id) => {
-                    return {
-                        nodeId: id,
-                        attributeId: AttributeIds.Value,
-                    } as ReadValueIdOptions
-                }), 
-                {
-                    samplingInterval: config.samplingIntervalMs,
-                    queueSize: 1000
-                }, 
-                TimestampsToReturn.Both
-            )
-        } else {
-            console.warn(`OPC UA Client: unable to add realated Variables and Properties to Subscription due to DeviceLimits!`)
-        }
+        await this.subscribeRelatedVariableNodeIds()
         this._initialized = true
         if (
             this._queuedBaseModelChangeEvents.length > 0 ||
@@ -433,13 +418,11 @@ export class OpcUaDeviceProxyClass {
             machine._relatedNodeIds.forEach((nodeId) => {
                 this._relatedNodeIdMap.set(nodeId, machine)
             })
-            const components: UaMachineryComponent[] = Array.from(machine.components.values())
-            for (let index = 0; index < components.length; index++) {
-                const component = components[index];
+            this.forEachMachineComponent(machine, (component) => {
                 component._relatedNodeIds.forEach((nodeId) => {
                     this._relatedNodeIdMap.set(nodeId, component)
                 })
-            }
+            })
             const processValues: UaProcessValue[] = Array.from(machine.monitoring.values())
             for (let index = 0; index < processValues.length; index++) {
                 const processValue = processValues[index];
@@ -453,6 +436,22 @@ export class OpcUaDeviceProxyClass {
         console.log(`OPC UA Client: contains '${relatedNodes.length}' related NodeId's`)
     }
 
+    /*
+     * Components are a tree (ua-machine-component.ts browses nested Components AddIns), so both
+     * collection walks have to descend into it.
+     */
+    private forEachMachineComponent(machine: UaMachineryMachine, visit: (component: UaMachineryComponent) => void) {
+        const walk = (component: UaMachineryComponent) => {
+            visit(component)
+            for (const nested of component.components.values()) {
+                walk(nested)
+            }
+        }
+        for (const component of machine.components.values()) {
+            walk(component)
+        }
+    }
+
     private collectRelatedVariableNodeIds() {
         this._relatedVariableNodeIds.clear()
         const machines = Array.from(this.machines.values())
@@ -461,22 +460,65 @@ export class OpcUaDeviceProxyClass {
             machine._relatedVariableNodeIds.forEach((nodeId) => {
                 this._relatedVariableNodeIds.add(nodeId)
             })
-            const components: UaMachineryComponent[] = Array.from(machine.components.values())
-            for (let index = 0; index < components.length; index++) {
-                const component = components[index];
-                component._relatedNodeIds.forEach((nodeId) => {
+            /* only Variables/Properties may be monitored: _relatedNodeIds also holds Object and
+               ObjectType NodeIds (AddIns, TypeDefinitions), which a subscription must not take */
+            this.forEachMachineComponent(machine, (component) => {
+                component._relatedVariableNodeIds.forEach((nodeId) => {
                     this._relatedVariableNodeIds.add(nodeId)
                 })
-            }
+            })
             const processValues: UaProcessValue[] = Array.from(machine.monitoring.values())
             for (let index = 0; index < processValues.length; index++) {
                 const processValue = processValues[index];
-                processValue._relatedNodeIds.forEach((nodeId) => {
+                processValue._relatedVariableNodeIds.forEach((nodeId) => {
                     this._relatedVariableNodeIds.add(nodeId)
                 })
             }
         }
         console.log(`OPC UA Client: contains '${this._relatedVariableNodeIds.size}' related Variable/Property-NodeId's`)
+    }
+
+    /*
+     * monitorItems() rejects an empty node list with BadNothingToDo (0x800f0000), and a server answers
+     * BadTooManyMonitoredItems once one request exceeds MaxMonitoredItemsPerCall. Hence: an empty set
+     * subscribes nothing, everything else goes in chunks that stay below the server limits.
+     */
+    private async subscribeRelatedVariableNodeIds() {
+        const nodeIds = Array.from(this._relatedVariableNodeIds.values())
+        if (nodeIds.length === 0) {
+            console.warn(`OPC UA Client: no Variable/Property to add to Subscription! the server exposes no monitored node`)
+            return
+        }
+        const maxPerCall = this.deviceLimits.get("MaxMonitoredItemsPerCall") || 0
+        const maxPerSub = this.deviceLimits.get("MaxMonitoredItemsPerSubscription") || 0
+        if (maxPerSub > 0 && nodeIds.length > (maxPerSub - config.subscriptionSlack)) {
+            const allowed = Math.max(1, maxPerSub - config.subscriptionSlack)
+            console.warn(`OPC UA Client: '${nodeIds.length}' Variables/Properties exceed MaxMonitoredItemsPerSubscription '${maxPerSub}', monitoring only '${allowed}'!`)
+            nodeIds.length = allowed
+        }
+        let chunkSize = config.maxMonitoredItemsPerRequest > 0 ? config.maxMonitoredItemsPerRequest : nodeIds.length
+        if (maxPerCall > 0) {
+            chunkSize = Math.min(chunkSize, Math.max(1, maxPerCall - config.subscriptionSlack))
+        }
+        chunkSize = Math.max(1, Math.min(chunkSize, nodeIds.length))
+        console.log(`OPC UA Client: adding '${nodeIds.length}' related Variables and Properties to Subscription in chunks of '${chunkSize}'!`)
+        for (let start = 0; start < nodeIds.length; start += chunkSize) {
+            const chunk = nodeIds.slice(start, start + chunkSize)
+            const group = await this.subscription!.monitorItems(
+                chunk.map((id) => {
+                    return {
+                        nodeId: id,
+                        attributeId: AttributeIds.Value,
+                    } as ReadValueIdOptions
+                }),
+                {
+                    samplingInterval: config.samplingIntervalMs,
+                    queueSize: 1000
+                },
+                TimestampsToReturn.Both
+            )
+            log.debug(`OPC UA Client: monitored-item chunk '${Math.floor(start / chunkSize) + 1}' of '${Math.ceil(nodeIds.length / chunkSize)}' created '${group.monitoredItems.length}' items`)
+        }
     }
 
     private async processQueuedChangeEvents() {
@@ -797,7 +839,7 @@ export class OpcUaDeviceProxyClass {
 
     private async discoverSingleMachine(id: string) {
         try {
-            const uaMachine = new UaMachineryMachine(this.session!, id, this.namespaceArray)
+            const uaMachine = new UaMachineryMachine(this.session!, id, this.namespaceArray, this.typeResolver!)
             await uaMachine.initialize()
             this.machines.set(`${id}`, uaMachine)        
         } catch (error) {
