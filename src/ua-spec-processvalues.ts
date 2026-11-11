@@ -358,3 +358,11 @@ export const PROCESS_VALUE_DEVIATION_SENSITIVITY_ENUMS: Record<number, string> =
 
 /* EngineeringUnits of PercentageValue / percentage limits are fixed (OPC 40001-2 7.1). */
 export const PERCENTAGE_UNIT = { namespaceUri: "http://www.opcfoundation.org/UA/units/un/cefact", unitId: 20529, displayName: "%", displayUnit: "percent" };
+
+/*
+ * 40001-2 7.1 Table 1: DefaultInstanceBrowseName of ProcessValueType is 'ProcessValue'. Vendor
+ * process-value lookalikes on the demo server use 'ProcessValue_1' / 'ProcessValue_2' as direct
+ * children of the machine with no Monitoring block - the name marks them as monitoring candidates that
+ * must be classified (spec ProcessValueType or ForeignMonitoringType), not silently skipped.
+ */
+export const PROCESS_VALUE_INSTANCE_NAME_PREFIX = "ProcessValue";

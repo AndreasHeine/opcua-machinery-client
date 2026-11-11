@@ -5,19 +5,22 @@ import {
     ReferenceTypeIds,
 } from "node-opcua";
 import { UaBuildingBlock } from "./ua-building-block";
+import { UaForeignMonitoringType } from "./ua-foreign-monitoring";
 import { UaMachineryComponent } from "./ua-machine-component";
 import { UaProcessValue } from "./ua-processvalue";
-import { UaTypeResolver } from "./ua-types";
+import { TypeMatch, UaTypeResolver } from "./ua-types";
 import { browseAddIns, browseChildByBrowseName, browseComponents, browseOrganized, isMethodNode, UaRef } from "./ua-browse";
 import { normalizeValue, readAttributes } from "./ua-read";
 import {
     ALL_BLOCK_TYPE_REFS,
+    BUILDING_BLOCKS,
     BUILDING_BLOCKS_FOLDER_BROWSE_NAME,
+    CORE_TYPES,
     NAMESPACES,
     findBuildingBlockByBrowseName,
     findBuildingBlockByTypeRef,
 } from "./ua-spec";
-import { PROCESS_VALUE_TYPES } from "./ua-spec-processvalues";
+import { PROCESS_VALUE_INSTANCE_NAME_PREFIX, PROCESS_VALUE_TYPES } from "./ua-spec-processvalues";
 import { log } from "./config";
 
 /*
@@ -41,6 +44,12 @@ import { log } from "./config";
  * that carries a spec block BrowseName (or a documented vendor alias such as 'Equipment') but a foreign
  * chain is still loaded and reported - as a deviation, not as spec coverage.
  */
+
+/* 40001-1 §16.2 Table 41 - the declared Monitoring subfolders are descended into when looking for
+   ProcessValueType instances; everything else below a Monitoring block is reported as foreign. */
+const MONITORING_SUBFOLDER_NAMES: string[] = (
+    BUILDING_BLOCKS.find((block) => block.key === "monitoring") ?? { members: [] }
+).members.map((member) => member.browseName)
 
 export class UaMachineryMachine {
 
@@ -84,6 +93,18 @@ export class UaMachineryMachine {
      * keyed by canonical block NodeId (matched and foreign candidates alike).
      */
     readonly blocks: Map<string, UaBuildingBlock> = new Map()
+
+    /**
+     * OPC 40001-2 / §16 - monitoring content below a Monitoring block (or named like a process value)
+     * whose TypeDefinition chain does not reach the spec ProcessValueType [ns=Machinery/ProcessValues].
+     * Reported, never modelled, never subscribed.
+     */
+    readonly foreignMonitoring: Map<string, UaForeignMonitoringType> = new Map()
+
+    /**
+     * Block candidate refs kept from discoverBuildingBlocks() for reuse by discoverMonitoringContent().
+     */
+    private _blockCandidateRefs: UaRef[] = []
 
     /**
      * Value of CurrentState-Variable of the MachineryItemState_StateMachine
@@ -188,8 +209,8 @@ export class UaMachineryMachine {
 
     async discoverMetaData() {
         await this.loadMachineComponents()
-        await this.loadMonitoring()
         await this.discoverBuildingBlocks()
+        await this.discoverMonitoringContent()
     }
 
     /*
@@ -226,7 +247,7 @@ export class UaMachineryMachine {
         }
     }
 
-    /* Blocks may be referenced from the MachineryBuildingBlocks folder or from the item itself. */
+    /* Blocks and AddIns may be referenced from the item itself or from the MachineryBuildingBlocks folder. */
     private async findAddInOrComponent(browseName: string): Promise<UaRef | null> {
         const direct = this._addIns.find((addIn) => addIn.browseName === browseName)
         if (direct !== undefined) return direct
@@ -243,13 +264,102 @@ export class UaMachineryMachine {
         const candidate = this._components.find((component) => component.browseName === BUILDING_BLOCKS_FOLDER_BROWSE_NAME)
         if (candidate === undefined) return null
         const chain = await this.resolver.chainOfNode(candidate.nodeId)
-        const isFolderLike = chain.some((entry) => entry.browseName === "FolderType") || chain.length === 0
+        const isFolderLike = chain.some((entry) => entry.browseName === CORE_TYPES.folderType.browseName) || chain.length === 0
         if (!isFolderLike) {
             log.debug(`OPC UA Client: Machine '${this.nodeId}' child '${candidate.nodeId}' is named '${BUILDING_BLOCKS_FOLDER_BROWSE_NAME}' but is not FolderType based!`)
         }
         return candidate
     }
 
+    /*
+     * §16 + OPC 40001-2 - monitoring content: everything below the machine's Monitoring blocks
+     * (matched or foreign candidates), plus vendor process-value lookalikes that sit directly on the
+     * item or in the MachineryBuildingBlocks folder. Chain-matched ProcessValueType instances are
+     * modelled by UaProcessValue; everything else becomes a ForeignMonitoringType entry with its
+     * TypeDefinition chain and the Values of its direct Variable children.
+     */
+    async discoverMonitoringContent() {
+        const processValueRefs = new Map<string, UaRef>()
+        const seen = new Set<string>()
+        for (const block of this.blocks.values()) {
+            if (block.spec.key !== "monitoring") continue
+            this._relatedNodeIds.add(block.ref.nodeId)
+            await this.scanMonitoringSubtree(
+                block.ref.nodeId,
+                `Monitoring block '${block.ref.browseName}' [${block.ref.nodeId}]`,
+                processValueRefs,
+                seen,
+                0,
+            )
+        }
+        /*
+         * Vendor process-value lookalikes without any Monitoring block (demo: 'ProcessValue_1' /
+         * 'ProcessValue_2' on ns=33;i=5044 in a foreign namespace): the spec DefaultInstanceBrowseName
+         * prefix marks them as monitoring candidates that must be classified, not silently skipped.
+         */
+        for (const ref of [...this._addIns, ...this._components, ...this._blockCandidateRefs]) {
+            if (seen.has(ref.nodeId) || !ref.browseName.startsWith(PROCESS_VALUE_INSTANCE_NAME_PREFIX)) continue
+            seen.add(ref.nodeId)
+            const match = await this.resolver.match(ref.nodeId, [PROCESS_VALUE_TYPES.processValueType])
+            if (match.ref !== undefined) {
+                processValueRefs.set(ref.nodeId, ref)
+            } else {
+                await this.reportForeignMonitoring(
+                    ref,
+                    match,
+                    `direct child of machine '${this.nodeId}'`,
+                    `BrowseName looks like a '${PROCESS_VALUE_INSTANCE_NAME_PREFIX}...' instance but the TypeDefinition chain does not reach the 40001-2 ProcessValueType of namespace '${NAMESPACES.processValues}'`,
+                )
+            }
+        }
+        for (const nodeId of processValueRefs.keys()) {
+            await this.loadProcessValue(nodeId)
+        }
+    }
+
+    /*
+     * Collect candidates below a Monitoring block. Only §16.2 Table 41 subfolder names (Status /
+     * Health / Process / Consumption) and plain FolderType objects are descended; vendor-typed Objects
+     * (ChannelMonitoringType, Stacklight, MachineTool, ...) are reported as foreign entries including
+     * their direct Variable values. Bounded at depth 2 below the block.
+     */
+    private async scanMonitoringSubtree(nodeId: string, foundUnder: string, processValueRefs: Map<string, UaRef>, seen: Set<string>, depth: number) {
+        if (depth > 2) return
+        const children = [
+            ...await browseComponents(this.session, nodeId),
+            ...await browseOrganized(this.session, nodeId),
+        ]
+        for (const child of children) {
+            if (seen.has(child.nodeId)) continue
+            seen.add(child.nodeId)
+            if (isMethodNode(child.nodeClass)) continue
+            const match = await this.resolver.match(child.nodeId, [PROCESS_VALUE_TYPES.processValueType])
+            if (match.ref !== undefined) {
+                processValueRefs.set(child.nodeId, child)
+                continue
+            }
+            const isDeclaredSubfolder = MONITORING_SUBFOLDER_NAMES.includes(child.browseName)
+            const isFolderLike = match.chain.some((entry) => entry.browseName === CORE_TYPES.folderType.browseName)
+            if (depth < 2 && (isDeclaredSubfolder || isFolderLike)) {
+                await this.scanMonitoringSubtree(child.nodeId, `${foundUnder} -> '${child.browseName}' [${child.nodeId}]`, processValueRefs, seen, depth + 1)
+                continue
+            }
+            await this.reportForeignMonitoring(child, match, foundUnder, "child of a Monitoring block but the TypeDefinition chain is not a ProcessValueType")
+        }
+    }
+
+    private async reportForeignMonitoring(ref: UaRef, match: TypeMatch, foundUnder: string, reason: string) {
+        const entry = new UaForeignMonitoringType(this.session, this.resolver, ref, match, foundUnder, reason)
+        await entry.initialize()
+        this.foreignMonitoring.set(ref.nodeId, entry)
+        entry._relatedNodeIds.forEach((nodeId) => this._relatedNodeIds.add(nodeId))
+        log.debug(`OPC UA Client: machine '${this.nodeId}' foreign monitoring '${ref.nodeId}' TypeDefinition='${match.typeDefinition?.browseName ?? "?"}' (${reason})`)
+    }
+
+    /*
+     * A chain-matched ProcessValueType candidate. UaProcessValue.classifyInstance() throws when the chain
+     * does not reach the spec ProcessValueType - that throw is the filter contract, warn and keep going.
+     */
     async loadProcessValue(id: string) {
         try {
             const processValue = new UaProcessValue(this.session, id, this.resolver)
@@ -258,29 +368,6 @@ export class UaMachineryMachine {
             this._relatedNodeIds.add(id)
         } catch (error) {
             log.warn(`OPC UA Client: error while loading ProcessValue -> ${(error as Error).message}`)
-        }
-    }
-
-    /* §16 - Monitoring building block: ProcessValueType instances plus foreign monitoring types. */
-    async loadMonitoring() {
-        const monitoringBlock = await this.findAddInOrComponent("Monitoring")
-        if (monitoringBlock === null) return
-        this._relatedNodeIds.add(monitoringBlock.nodeId)
-        if (this.resolver.namespaceIndexOf(NAMESPACES.processValues) === undefined) {
-            log.debug(`OPC UA Client: server has no '${NAMESPACES.processValues}' namespace, skipping Monitoring content of '${this.nodeId}'`)
-            return
-        }
-        const children = [
-            ...(await browseComponents(this.session, monitoringBlock.nodeId)),
-            ...(await browseOrganized(this.session, monitoringBlock.nodeId)),
-        ]
-        for (const child of children) {
-            const match = await this.resolver.match(child.nodeId, [PROCESS_VALUE_TYPES.processValueType])
-            if (match.ref === undefined) {
-                log.debug(`OPC UA Client: Monitoring child '${child.nodeId}' TypeDefinition='${match.typeDefinition?.browseName ?? "?"}' is not a ProcessValueType, reported as foreign type`)
-                continue
-            }
-            await this.loadProcessValue(child.nodeId)
         }
     }
 
@@ -309,6 +396,7 @@ export class UaMachineryMachine {
             if (isMethodNode(ref.nodeClass)) continue
             if (!candidateRefsById.has(ref.nodeId)) candidateRefsById.set(ref.nodeId, ref)
         }
+        this._blockCandidateRefs = Array.from(candidateRefsById.values())
         for (const ref of candidateRefsById.values()) {
             const match = await this.resolver.match(ref.nodeId, ALL_BLOCK_TYPE_REFS)
             const spec = match.ref !== undefined
@@ -390,6 +478,7 @@ export class UaMachineryMachine {
             MachineryItemState: this.itemState,
             MachineryOperationMode: this.operationMode,
             Monitoring: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() }),
+            ForeignMonitoringTypes: Array.from(this.foreignMonitoring.values()).map((f) => { return f.toJSON() }),
             BuildingBlocks: blocksBySpecKey,
         }
     }

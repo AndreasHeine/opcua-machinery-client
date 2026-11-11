@@ -22,13 +22,16 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   installs SIGINT/SIGTERM shutdown.
 - `src/ua-device.ts` — owns connection, session, one shared subscription, server-status/limits
   reads, machine discovery, the 10s `output.json` refresh and the 60s machine re-scan.
-- `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` —
-  per-node models. All four share the same contract: `initialize()` (browse + read),
+- `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` + `src/ua-foreign-monitoring.ts` —
+  per-node models. All of them share the same contract: `initialize()` (browse + read),
   `notify(nodeId, dataValue)` (fan-out from the single subscription's `changed` handler),
   `toJSON()` (the `output.json` / REST shape). `ua-machine.ts` runs the generic block loop
   (`discoverBuildingBlocks()` classifies candidate children against `ALL_BLOCK_TYPE_REFS`,
   `wireBuildingBlocks()` feeds the legacy `Identification` / `MachineryItemState` /
-  `MachineryOperationMode` keys, `buildingBlockCounts()` feeds the startup summary in `ua-device.ts`).
+  `MachineryOperationMode` keys, `buildingBlockCounts()` feeds the startup summary in `ua-device.ts`)
+  and the Phase 3 monitoring scan (`discoverMonitoringContent()` / `scanMonitoringSubtree()` descend
+  Monitoring blocks and named-`ProcessValue*` lookalikes; chain-matched instances become `UaProcessValue`,
+  everything else a `UaForeignMonitoringType` entry).
   New discovered data usually means touching all hooks plus `collectRelatedNodeIds()` /
   `collectRelatedVariableNodeIds()` / `subscribeRelatedVariableNodeIds()` in `ua-device.ts`.
 - Spec registry (the single source of NodeIds and spec BrowseNames — models import from here instead
@@ -67,8 +70,7 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   `MaxMonitoredItemsPerSubscription` minus `SUBSCRIPTION_SLACK`.
 - Hardcoded OPC constants live in `src/ua-spec*.ts` (the only place NodeIds and spec BrowseNames are
   declared): namespace URIs `http://opcfoundation.org/UA/Machinery/` and
-  `.../Machinery/ProcessValues/` (Monitoring discovery returns early if the ProcessValues namespace is
-  absent), Machines folder NodeId `ns=<machineryIndex>;i=1001`, server variables
+  `.../Machinery/ProcessValues/`, Machines folder NodeId `ns=<machineryIndex>;i=1001`, server variables
   `i=2256 / 2259 / 2267 / 2255 / 2269`, operational limits `i=24098 / 24104 / 11714 / 11709 / 11705 /
   11712 / 11707`.
 - Type definition classification is by **`HasSubtype` chain** (`UaTypeResolver` in `ua-types.ts`), not by
@@ -88,14 +90,30 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   ...) are filtered out by NodeClass before classification and are never read or called. §12/§13 state
   Objects + transitions exist only on the TypeDefinition; the instance only carries `CurrentState`, so
   `FoundStates` is normally empty and `SpecStates` (from `STATE_TABLES`) is the spec truth.
+- Monitoring / Process Values (Phase 3): `discoverMonitoringContent()` in `ua-machine.ts` starts from the
+  block results (candidates with `spec.key === "monitoring"`, matched **or** foreign) plus direct children
+  named `ProcessValue*` (`PROCESS_VALUE_INSTANCE_NAME_PREFIX` — vendor lookalikes like the demo's
+  `ProcessValue_1/_2` are classified, never silently skipped). `scanMonitoringSubtree()` descends only
+  §16.2 Table 41 subfolders (derived from the monitoring block's `members` = `Status`/`Health`/`Process`/
+  `Consumption`) or FolderType-chained Objects, bounded at depth 2; anything not chain-matched to the
+  ProcessValues `ProcessValueType` lands in `ForeignMonitoringTypes` (`UaForeignMonitoringType`: TypeDefinition
+  chain + direct Variable values read once, **never subscribed** — the old early-return when the
+  ProcessValues namespace was absent is gone, foreign namespaces are now reported instead). PV candidates
+  are **not** filtered by NodeClass: real PV instances on the demo server (`ns=50;s=MyMachine`) are
+  Object nodes under a BaseObjectType-typed Monitoring folder. `UaProcessValue` classifies every child
+  against the registry tables (`PROCESS_VALUE_CHILDREN` / `ANALOG_SIGNAL_CHILDREN` /
+  `ANALOG_SIGNAL_PROPERTIES` / `SETPOINT_CHILDREN`): BrowseName picks the entry, the chain decides
+  `SpecMatch`; standardized enum labels come from the child's **EnumValues Property** plus the
+  `PROCESS_VALUE_*_ENUMS` tables (never decode the Value as an enum array); alarm Objects and Methods are
+  reported (InputArgs/OutputArgs read, never called, never subscribed).
 - Startup logs are noisy by design, not a bug. Against `opcua.umati.app:4843` the client finds 24
   machines, prints one `Machine '<id>' type chain: ...` line per machine and the
   `building blocks of '24' machines: components=5 foreign:equipment=7 ... identification=24 itemState=10
   operationCounters=1 operationMode=9` summary, and at `LOG_LEVEL=debug` several dozen lines such as
-  `Monitoring child 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType' is not a ProcessValueType,
-  reported as foreign type`. On that server only ~9 machines expose a non-null `MachineryItemState` and
-  only 1 has `Monitoring` entries, so sparse output is normal. Verify a change by comparing
-  `GET /machines` and `output.json` before/after, not by log silence.
+  `foreign monitoring 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType'`. On that server only ~9
+  machines expose a non-null `MachineryItemState`, only 1 machine has real `Monitoring` entries (2
+  ProcessValues) and 9 machines report `ForeignMonitoringTypes` (~33 entries), so sparse output is
+  normal. Verify a change by comparing `GET /machines` and `output.json` before/after, not by log silence.
 - Status codes: model files read through `ua-read.ts`, whose `DecodedValue.ok` is
   `isStatusCodeGoodish()` (Good plus several `Uncertain*` codes), and `statusCodeIsUncertain` marks the
   rest. `ua-device.ts` still mixes `isStatusCodeGoodish()` with direct
