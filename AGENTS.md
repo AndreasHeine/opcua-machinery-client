@@ -21,7 +21,11 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
 - `src/main.ts` — only entrypoint: builds `OpcUaDeviceProxyClass`, starts the HTTP server,
   installs SIGINT/SIGTERM shutdown.
 - `src/ua-device.ts` — owns connection, session, one shared subscription, server-status/limits
-  reads, machine discovery, the 10s `output.json` refresh and the 60s machine re-scan.
+  reads, machine discovery, the 10s `output.json` refresh and the 60s `runRescan()` re-scan. The
+  subscription's `changed` handler routes each DataChange to exactly one model via `_relatedNodeIdMap`
+  (server Status/ServiceLevel ids special-cased); model change events run through the
+  `drainChangeEvents()` queue → `processGeneralModelChangeEvent()` / `processSemanticChangeEvent()` →
+  `removeMachine()` / `reinitializeMachine()` → `syncMonitoredItems()`.
 - `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` + `src/ua-foreign-monitoring.ts` + `src/ua-jobs.ts` —
   per-node models. All of them share the same contract: `initialize()` (browse + read),
   `notify(nodeId, dataValue)` (fan-out from the single subscription's `changed` handler),
@@ -139,6 +143,17 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   real JobManagement AddIn (`ns=49;s=MyControledMachine`) and 1 a foreign `Jobs` candidate, so sparse
   output is normal. Verify a change by comparing `GET /machines` and `output.json` before/after, not by
   log silence.
+- Model changes (Phase 5): the `GeneralModelChangeEventType` verb is the 8-bit ModelChangeStructure-
+  DataType bitmask from OPC 10000-5 12.16 Table 254 (`MODEL_CHANGE_VERB` in `ua-device.ts`: NodeAdded
+  0x01, NodeDeleted 0x02, ReferenceAdded 0x04, ReferenceDeleted 0x08, DataTypeChanged 0x10) — the old
+  0x01/0x10/0x100/… masks were a shifted-decimal mistake and only NodeAdded ever matched. The structure
+  has **no parent field** (affected / affectedType / verb), so an unknown NodeAdded can only trigger the
+  debounced re-scan. Never re-initialize a model in place — the member maps are not cleared, so that
+  would merge stale and fresh entries; `reinitializeMachine()` builds a fresh `UaMachineryMachine`
+  (a failed re-discovery is treated as a deletion). Owning-machine lookup goes through
+  `_owningMachineByNodeId` (a ProcessValue/Component nodeId is **not** a machine nodeId). Stale monitored
+  items are cleaned up by `syncMonitoredItems()`; every drain/rescan path catches errors because an
+  unhandled rejection exits the process.
 - Status codes: model files read through `ua-read.ts`, whose `DecodedValue.ok` is
   `isStatusCodeGoodish()` (Good plus several `Uncertain*` codes), and `statusCodeIsUncertain` marks the
   rest. `ua-device.ts` still mixes `isStatusCodeGoodish()` with direct
@@ -157,7 +172,8 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
 ## Configuration and environment
 - All runtime config is env-driven via `src/config.ts` (`OPCUA_ENDPOINT`, `PORT`, `OUTPUT_FILE`,
   `REFRESH_INTERVAL_MS`, `RESCAN_INTERVAL_MS`, `PUBLISHING_INTERVAL_MS`, `SAMPLING_INTERVAL_MS`,
-  `SUBSCRIPTION_SLACK`, `MAX_MONITORED_ITEMS_PER_REQUEST`, `INIT_RETRY_DELAY_MS`, `LOG_LEVEL`,
+  `SUBSCRIPTION_SLACK`, `MAX_MONITORED_ITEMS_PER_REQUEST`, `INIT_RETRY_DELAY_MS`,
+  `MODEL_CHANGE_RESCAN_DEBOUNCE_MS`, `LOG_LEVEL`,
   optional `OPCUA_USERNAME` / `OPCUA_PASSWORD`). Default endpoint:
   `opc.tcp://opcua.umati.app:4843` (the public umati demo). No dotenv is loaded.
 - Identity defaults to `UserTokenType.Anonymous` with no security policy or client certificate.

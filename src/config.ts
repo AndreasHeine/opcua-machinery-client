@@ -31,6 +31,8 @@ export type AppConfig = {
     /* monitored-item capacity: keep slack below MaxMonitoredItemsPerSubscription */
     subscriptionSlack: number
     maxMonitoredItemsPerRequest: number
+    /* debounce for model-change-event triggered re-scans */
+    modelChangeRescanDebounceMs: number
     requestTimeoutMs: number
     initRetryDelayMs: number
     logLevel: "debug" | "info" | "warn" | "error"
@@ -56,6 +58,7 @@ export const config: AppConfig = {
     serverSamplingIntervalMs: toNumber(process.env.SERVER_SAMPLING_INTERVAL_MS, 5_000),
     subscriptionSlack: toNumber(process.env.SUBSCRIPTION_SLACK, 10),
     maxMonitoredItemsPerRequest: toNumber(process.env.MAX_MONITORED_ITEMS_PER_REQUEST, 500),
+    modelChangeRescanDebounceMs: toNumber(process.env.MODEL_CHANGE_RESCAN_DEBOUNCE_MS, 5_000),
     requestTimeoutMs: toNumber(process.env.REQUEST_TIMEOUT_MS, 30 * 60 * 1000),
     initRetryDelayMs: toNumber(process.env.INIT_RETRY_DELAY_MS, 10_000),
     logLevel,
