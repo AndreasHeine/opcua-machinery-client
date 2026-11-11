@@ -33,6 +33,7 @@ import { UaMachineryMachine } from './ua-machine';
 import { UaMachineryComponent } from './ua-machine-component';
 import { UaProcessValue } from './ua-processvalue';
 import { UaTypeResolver } from './ua-types';
+import { buildCoverageReport, formatCoverageSummaryLines } from './ua-coverage';
 import { clearInterval } from 'timers';
 import { config, log } from './config';
 
@@ -405,9 +406,16 @@ export class OpcUaDeviceProxyClass {
         }, config.rescanIntervalMs)
     }
 
+    /*
+     * output.json v2 (Phase 6): 'Server' / 'Machinery.Machines' / 'Coverage'.
+     * The object is replaced on every refresh (not Object.assign) so no v1 key can survive a re-init.
+     * The REST layer reads exactly this object through the summery getter.
+     */
     private updateSummery() {
-        Object.assign(this._summery, {
+        const coverage = buildCoverageReport(this.machines, this._machinesFolderNodeId)
+        this._summery = {
             Server: {
+                Connected: this.isConnected(),
                 Endpoint: this.endpoint,
                 ServerState: this.serverState,
                 ServiceLevel: this.serviceLevel,
@@ -430,8 +438,11 @@ export class OpcUaDeviceProxyClass {
                 ServerProfileArray: this.serverProfileArray,
                 OperationalLimits: Object.fromEntries(this.deviceLimits.entries())
             },
-            Machines: Array.from(this.machines.values()).map((item) => {return item.toJSON()})
-        })
+            Machinery: {
+                Machines: Array.from(this.machines.values()).map((item) => {return item.toJSON()})
+            },
+            Coverage: coverage
+        }
     }
 
     private collectRelatedNodeIds() {
@@ -1112,6 +1123,7 @@ export class OpcUaDeviceProxyClass {
         console.log(`OPC UA Client: done loading MetaData!`)
         this.logBuildingBlockSummary()
         this.updateSummery()
+        this.logCoverageSummary()
         await writeJson(config.outputFile, this._summery, {spaces: '    '})
         this.updateSummeryInterval = setInterval(async () => {
             if (this.isConnected() === false) return
@@ -1151,6 +1163,15 @@ export class OpcUaDeviceProxyClass {
             .map(([key, count]) => `${key}=${count}`)
             .join(' ')
         console.log(`OPC UA Client: job management of '${this.machines.size}' machines: ${jobParts.length > 0 ? jobParts : 'none found - OPC 40001-3 not exposed by this server'}`)
+    }
+
+    /* Per-spec coverage lines (OPC 40001-1 / -2 / -3) built from the same report as output.json / GET /coverage. */
+    private logCoverageSummary() {
+        const coverage = (this._summery as { Coverage?: ReturnType<typeof buildCoverageReport> }).Coverage
+        if (coverage === undefined) return
+        for (const line of formatCoverageSummaryLines(coverage)) {
+            console.log(`OPC UA Client: ${line}`)
+        }
     }
 
     private async findMachinesOnServer() {

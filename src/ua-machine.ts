@@ -536,7 +536,7 @@ export class UaMachineryMachine {
             Components: Array.from(this.components.values()).map((c) => { return c.toJSON() }),
             MachineryItemState: this.itemState,
             MachineryOperationMode: this.operationMode,
-            Monitoring: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() }),
+            ProcessValues: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() }),
             ForeignMonitoringTypes: Array.from(this.foreignMonitoring.values()).map((f) => { return f.toJSON() }),
             Jobs: Array.from(this.jobs.values()).map((j) => { return j.toJSON() }),
             ForeignJobCandidates: Array.from(this.foreignJobs.values()).map((f) => { return f.toJSON() }),

@@ -5,7 +5,8 @@ Compact guidance for working in this repo. Read `README.md` for user-facing docs
 ## What this is
 Single-package TypeScript OPC UA **client** (no monorepo, no framework, no web UI). It
 connects to an OPC UA server, discovers OPC 40001 Machinery instances, subscribes to their
-variables, writes a snapshot to `output.json` every 10s, and serves a read-only Express API.
+variables, writes a snapshot to `output.json` every 10s (server state, machines, and a 40001-1/-2/-3
+feature `Coverage` report), and serves a read-only Express API including `GET /coverage`.
 
 ## Commands
 - `npm start` — builds with `tsc` and runs `node dst/src/main.js`. A reachable OPC UA server is required.
@@ -55,8 +56,16 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   `decodeEnumValues`). The resolver is created in `ua-device.initialize()` right after the
   NamespaceArray read and passed into every model.
 - `src/ua-helper.ts` — NodeId <-> string conversion and status-code acceptance.
-- `src/http-server.ts` — `GET /server`, `GET /machines`, `GET /machines?productInstanceUri=`.
-  Reads the in-memory summary via a getter callback; it does not read `output.json`.
+- `src/ua-coverage.ts` — Phase 6 coverage report (`buildCoverageReport()`): pure aggregation over the
+  public model API for every `FEATURES` id in `ua-spec.ts` — per-feature found / machines / missing /
+  foreign counts + foreign TypeDefinitions, per-spec area rollups (`Specs`) that feed the startup
+  `coverage 'OPC 40001-x' ...` console lines, `output.json`'s `Coverage` block and `GET /coverage`.
+  Feature ids must match the `feature` strings the registries assign to members (block `feature`,
+  ProcessValues child/alarm/method `feature`, job member `feature`) or evidence is silently dropped.
+- `src/http-server.ts` — `GET /health`, `GET /server`, `GET /coverage`, `GET /machines`,
+  `GET /machines?productInstanceUri=`, `GET /machines/:nodeId`,
+  `GET /machines/:nodeId/processvalues`, `GET /machines/:nodeId/jobs` (NodeId URL-encoded, `=` as
+  `%3D`). Reads the in-memory summary via a getter callback; it does not read `output.json`.
 
 ## Gotchas that will bite you
 - **NodeId identity is a canonical string** (`ns=<index>;i=<n>`) produced by
@@ -137,8 +146,9 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   `building blocks of '24' machines: components=5 foreign:equipment=7 ... identification=24 itemState=10
   operationCounters=1 operationMode=9` summary and the
   `job management of '24' machines: foreign:jobs=1 jobs=1` line, and at `LOG_LEVEL=debug` several dozen
-  lines such as `foreign monitoring 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType'`. On that
-  server only ~9 machines expose a non-null `MachineryItemState`, only 1 machine has real `Monitoring`
+  lines such as `foreign monitoring 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType'`, and the
+  four `coverage 'OPC 40001-x' ...` / `coverage foreign types: ...` startup lines. On that
+  server only ~9 machines expose a non-null `MachineryItemState`, only 1 machine has real `ProcessValues`
   entries (2 ProcessValues), 9 machines report `ForeignMonitoringTypes` (~33 entries), 1 machine has a
   real JobManagement AddIn (`ns=49;s=MyControledMachine`) and 1 a foreign `Jobs` candidate, so sparse
   output is normal. Verify a change by comparing `GET /machines` and `output.json` before/after, not by
@@ -163,6 +173,15 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   init failure → `process.exit(-1)`; bad `ServerState` or `ServiceLevel <= 200` re-runs
   `initialize()` every 10s. Any new unhandled promise rejection can kill the app.
 - `output.json` is written with a relative path, so it lands in the **process CWD**, not the repo root.
+- `output.json` v2 (Phase 6) shape: `Server` (with `Connected`), `Machinery: { Machines: [...] }` and a
+  top-level `Coverage` block; the machine JSON uses **`ProcessValues`** (the old key was `Monitoring` —
+  the internal model field `machine.monitoring` did NOT change), `ForeignMonitoringTypes`, `Jobs`,
+  `ForeignJobCandidates`, `BuildingBlocks`. `updateSummery()` **replaces** `this._summery` (no
+  `Object.assign`) so no v1 key survives a re-init. `Coverage.ForeignTypes` is namespace-qualified —
+  browseName collisions like MachineTool `MonitoringType [ns=5]` vs the 40001-1 `MonitoringType
+  [ns=3]`, or PlasticsRubber `ProcessValueType [ns=18]` vs the 40001-2 one, are told apart by
+  NodeId/NamespaceUri. `jobs.stateMachine` is measured on the JobOrderControl **container** — the
+  `CurrentState` member carries the same registry feature and is deliberately not double-counted.
 - Tuning lives at the top of `ua-device.ts`: `optionsInitial` (session timeout, keep-alive, reconnect
   strategy) and `createSubscriptionRequest` (publishing interval from `PUBLISHING_INTERVAL_MS`). There
   is a single subscription for everything; `subscribeRelatedVariableNodeIds()` keeps monitored items
