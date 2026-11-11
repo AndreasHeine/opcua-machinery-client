@@ -198,12 +198,12 @@ feature `Coverage` report), and serves a read-only Express API including `GET /c
 - Identity defaults to `UserTokenType.Anonymous` with no security policy or client certificate.
   This is a demo tool; do not "improve" it into a hardened client.
 - HTTP port: `process.env.PORT || 3000`.
-- Docker: the Dockerfile sets `ENV PORT=8080` and `EXPOSE 8080`, so the documented
-  `docker run -p 3000:3000` in `README.md` does not match the image — use `-p 8080:8080`.
+- Docker: the Dockerfile sets `ENV PORT=8080` and `EXPOSE 8080`; the README documents `docker run
+  -p 8080:8080` accordingly. Inside the container the app listens on 8080, not 3000.
 
 ## Toolchain and dependencies
-- Node 26 in Docker (`node:26-bookworm-slim`); `@types/node` is pinned to 26.6.6, while `README.md`
-  still claims "Node.js 18+".
+- Node 26 in Docker (`node:26-bookworm-slim`); `@types/node` is pinned to 26.6.6. `node-opcua` 2.187.26
+  requires Node `>=22.13.0` (its package.json `engines`), which is what the README states.
 - `node-opcua` (2.187.26), `typescript` (7.0.2) and `@types/node` are pinned with no caret. Renovate
   owns dependency PRs (`renovate.json` = `config:recommended`); expect branches named `renovate/*`.
 - `typescript@7` is the native compiler port: `tsc` works, but the legacy JS compiler API is no longer
