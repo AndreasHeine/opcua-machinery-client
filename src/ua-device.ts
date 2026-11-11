@@ -372,11 +372,16 @@ export class OpcUaDeviceProxyClass {
             if (this.isSessionPresent() === false) return
             await this.findMachinesOnServer()
             const foundMachines = Array.from(this.foundMachines)
+            let newMachinesFound = false
             for (let index = 0; index < foundMachines.length; index++) {
                 const machineId = foundMachines[index];
                 if (this._relatedNodeIdMap.has(machineId) === false) {
                     await this.discoverSingleMachine(machineId)
+                    newMachinesFound = true
                 }
+            }
+            if (newMachinesFound === true) {
+                this.logBuildingBlockSummary()
             }
         }, config.rescanIntervalMs)
     }
@@ -857,6 +862,7 @@ export class OpcUaDeviceProxyClass {
             await this.discoverSingleMachine(machineNodeId)
         }
         console.log(`OPC UA Client: done loading MetaData!`)
+        this.logBuildingBlockSummary()
         this.updateSummery()
         await writeJson(config.outputFile, this._summery, {spaces: '    '})
         this.updateSummeryInterval = setInterval(async () => {
@@ -866,6 +872,25 @@ export class OpcUaDeviceProxyClass {
             await writeJson(config.outputFile, this._summery, {spaces: '    '})
             console.log(`OPC UA Client: '${config.outputFile}' got updated!`)
         }, config.refreshIntervalMs)
+    }
+
+    /*
+     * Startup coverage line: how many OPC 40001-1 building blocks were found across all machines.
+     * 'foreign:<key>' counts candidates that carry a spec block BrowseName but no spec TypeDefinition -
+     * deviations of the server, not our coverage.
+     */
+    private logBuildingBlockSummary() {
+        const totals = new Map<string, number>()
+        for (const machine of this.machines.values()) {
+            for (const [key, count] of machine.buildingBlockCounts().entries()) {
+                totals.set(key, (totals.get(key) ?? 0) + count)
+            }
+        }
+        const parts = Array.from(totals.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([key, count]) => `${key}=${count}`)
+            .join(' ')
+        console.log(`OPC UA Client: building blocks of '${this.machines.size}' machines: ${parts.length > 0 ? parts : 'none found'}`)
     }
 
     private async findMachinesOnServer() {

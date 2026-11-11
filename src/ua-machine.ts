@@ -2,15 +2,21 @@ import {
     AttributeIds,
     ClientSession,
     DataValue,
-    DataTypeIds,
     ReferenceTypeIds,
 } from "node-opcua";
+import { UaBuildingBlock } from "./ua-building-block";
 import { UaMachineryComponent } from "./ua-machine-component";
 import { UaProcessValue } from "./ua-processvalue";
 import { UaTypeResolver } from "./ua-types";
-import { browseAddIns, browseChildByBrowseName, browseComponents, browseOrganized, browseProperties, UaRef } from "./ua-browse";
-import { normalizeValue, readAttributes, readAttributeOfMany, readValue } from "./ua-read";
-import { BUILDING_BLOCKS_FOLDER_BROWSE_NAME, MACHINERY_TYPES, NAMESPACES } from "./ua-spec";
+import { browseAddIns, browseChildByBrowseName, browseComponents, browseOrganized, isMethodNode, UaRef } from "./ua-browse";
+import { normalizeValue, readAttributes } from "./ua-read";
+import {
+    ALL_BLOCK_TYPE_REFS,
+    BUILDING_BLOCKS_FOLDER_BROWSE_NAME,
+    NAMESPACES,
+    findBuildingBlockByBrowseName,
+    findBuildingBlockByTypeRef,
+} from "./ua-spec";
 import { PROCESS_VALUE_TYPES } from "./ua-spec-processvalues";
 import { log } from "./config";
 
@@ -30,8 +36,10 @@ import { log } from "./config";
  *          +- MachineryEquipment        (AddIn, §17)
  *          +- Notifications             (AddIn, §18)
  *
- * Classification is done through the TypeDefinition + HasSubtype chain (see ua-types.ts), so vendor
- * subtypes such as 'ExtrusionMachineryItemState_StateMachineType' are recognized instead of skipped.
+ * Every candidate child is classified through the TypeDefinition + HasSubtype chain (see ua-types.ts),
+ * so vendor subtypes such as 'ExtrusionMachineryItemState_StateMachineType' are recognized. A child
+ * that carries a spec block BrowseName (or a documented vendor alias such as 'Equipment') but a foreign
+ * chain is still loaded and reported - as a deviation, not as spec coverage.
  */
 
 export class UaMachineryMachine {
@@ -70,6 +78,12 @@ export class UaMachineryMachine {
      * A Map of all the found MachineryProcessValues
      */
     readonly monitoring: Map<string, UaProcessValue> = new Map()
+
+    /**
+     * OPC 40001-1 §6.3.1 - every building block candidate found for this machine,
+     * keyed by canonical block NodeId (matched and foreign candidates alike).
+     */
+    readonly blocks: Map<string, UaBuildingBlock> = new Map()
 
     /**
      * Value of CurrentState-Variable of the MachineryItemState_StateMachine
@@ -161,6 +175,9 @@ export class UaMachineryMachine {
         if (identificationKey !== undefined) {
             this.identification.set(identificationKey, value)
         }
+        for (const block of this.blocks.values()) {
+            block.notify(nodeId, dataValue)
+        }
         for (const processValue of this.monitoring.values()) {
             processValue.notify(nodeId, dataValue)
         }
@@ -170,10 +187,9 @@ export class UaMachineryMachine {
     }
 
     async discoverMetaData() {
-        await this.loadMachineIdentification()
         await this.loadMachineComponents()
         await this.loadMonitoring()
-        await this.loadBuildingBlocks()
+        await this.discoverBuildingBlocks()
     }
 
     /*
@@ -193,32 +209,6 @@ export class UaMachineryMachine {
         this.references.set("TypeDefinitionNodeId", typeDefinitionNodeId)
         this.references.set("TypeDefinitionChain", UaTypeResolver.formatChain(chain))
         log.info(`OPC UA Client: Machine '${this.nodeId}' type chain: ${UaTypeResolver.formatChain(chain)}`)
-    }
-
-    /* §8 - Identification AddIn (also allowed directly on the MachineryItem). */
-    async loadMachineIdentification() {
-        for (const addIn of this._addIns) {
-            if (addIn.browseName !== "Identification") continue
-            await this.loadIdentificationOf(addIn)
-        }
-    }
-
-    /* Reads all HasProperty children of an Identification instance. */
-    async loadIdentificationOf(identification: UaRef) {
-        this._relatedNodeIds.add(identification.nodeId)
-        const properties = await browseProperties(this.session, identification.nodeId)
-        if (properties.length === 0) return
-        const readResults = await readAttributeOfMany(this.session, properties.map((property) => property.nodeId))
-        for (let index = 0; index < properties.length; index++) {
-            const property = properties[index]
-            const decoded = readResults[index]
-            this._relatedNodeIds.add(property.nodeId)
-            if (!decoded.ok) continue
-            const key = `${property.displayName ?? property.browseName}`
-            this.identification.set(key, decoded.value)
-            this._identificationKeyByNodeId.set(property.nodeId, key)
-            this._relatedVariableNodeIds.add(property.nodeId)
-        }
     }
 
     /* §11 - Components AddIn: every HasComponent child of the Components instance is a component. */
@@ -295,55 +285,102 @@ export class UaMachineryMachine {
     }
 
     /*
-     * §12 / §13 - MachineryItemState and MachineryOperationMode CurrentState.
-     * Matched through the HasSubtype chain of the state machine TypeDefinition, so vendor subtypes
-     * are handled without a hardcoded name list.
+     * §6.3.1 / §8 / §12 - §18 - generic building block discovery.
+     * Every candidate child (HasAddIn / HasComponent of the item or of the MachineryBuildingBlocks
+     * folder) is classified against ALL_BLOCK_TYPE_REFS through its HasSubtype chain. Matched children
+     * are modelled as spec blocks; children that only carry a spec block BrowseName (or vendor alias)
+     * are loaded as foreign candidates so the deviation shows up in output.json.
      */
-    async loadBuildingBlocks() {
+    async discoverBuildingBlocks() {
+        const blocksFolder = await this.findBuildingBlocksFolder()
+        const folderRefs: UaRef[] = blocksFolder === null
+            ? []
+            : [...await browseAddIns(this.session, blocksFolder.nodeId), ...await browseComponents(this.session, blocksFolder.nodeId)]
         /*
          * A block can be reached in several ways at once: as HasAddIn of the MachineryBuildingBlocks
          * folder, as HasComponent of that folder (the umati demo server exposes both, so the same block
          * NodeId comes back twice), or directly from the MachineryItem. Keyed by canonical NodeId, so
          * every block is loaded exactly once.
          */
-        const blocksFolder = await this.findBuildingBlocksFolder()
-        const folderRefs: UaRef[] = blocksFolder === null
-            ? []
-            : [...await browseAddIns(this.session, blocksFolder.nodeId), ...await browseComponents(this.session, blocksFolder.nodeId)]
-        const blockRefsById = new Map<string, UaRef>()
+        const candidateRefsById = new Map<string, UaRef>()
         for (const ref of [...folderRefs, ...this._addIns, ...this._components]) {
-            if (!blockRefsById.has(ref.nodeId)) blockRefsById.set(ref.nodeId, ref)
+            if (ref.browseName === BUILDING_BLOCKS_FOLDER_BROWSE_NAME) continue
+            /* read-only client: Methods (SetMachineTime, ...) are never modelled, browsed or called */
+            if (isMethodNode(ref.nodeClass)) continue
+            if (!candidateRefsById.has(ref.nodeId)) candidateRefsById.set(ref.nodeId, ref)
         }
-        for (const blockRef of blockRefsById.values()) {
-            const match = await this.resolver.match(blockRef.nodeId, [
-                MACHINERY_TYPES.machineryItemStateStateMachineType,
-                MACHINERY_TYPES.machineryOperationModeStateMachineType,
-            ])
-            if (match.ref === undefined) continue
-            this._relatedNodeIds.add(blockRef.nodeId)
-            const stateVariables = await browseComponents(this.session, blockRef.nodeId)
-            for (const stateVariable of stateVariables) {
-                if (stateVariable.browseName !== "CurrentState") continue
-                this._relatedNodeIds.add(stateVariable.nodeId)
-                const decoded = await readValue(this.session, stateVariable.nodeId)
-                if (decoded.ok || decoded.statusCodeIsUncertain) {
-                    this._relatedVariableNodeIds.add(stateVariable.nodeId)
-                }
-                const stateText = (decoded.ok || decoded.statusCodeIsUncertain)
-                    ? UaMachineryMachine.stateTextOf(decoded.value)
-                    : null
-                if (match.ref === MACHINERY_TYPES.machineryItemStateStateMachineType) {
-                    this.itemState = stateText
-                    this.itemStateNodeId = stateVariable.nodeId
-                } else {
-                    this.operationMode = stateText
-                    this.operationModeNodeId = stateVariable.nodeId
-                }
+        for (const ref of candidateRefsById.values()) {
+            const match = await this.resolver.match(ref.nodeId, ALL_BLOCK_TYPE_REFS)
+            const spec = match.ref !== undefined
+                ? findBuildingBlockByTypeRef(match.ref)
+                : findBuildingBlockByBrowseName(ref.browseName)
+            if (spec === undefined) {
+                log.debug(`OPC UA Client: machine '${this.nodeId}' child '${ref.nodeId}' TypeDefinition='${match.typeDefinition?.browseName ?? "?"}' is not an OPC 40001-1 building block, skipped`)
+                continue
             }
+            const block = new UaBuildingBlock(this.session, this.resolver, spec, ref, match)
+            await block.initialize()
+            this.blocks.set(ref.nodeId, block)
+            this._relatedNodeIds.add(ref.nodeId)
+            block._relatedNodeIds.forEach((nodeId) => this._relatedNodeIds.add(nodeId))
+            block._relatedVariableNodeIds.forEach((nodeId) => this._relatedVariableNodeIds.add(nodeId))
+        }
+        this.wireBuildingBlocks()
+    }
+
+    /*
+     * Feed the legacy top-level fields from the block models (these keys stay in output.json until the
+     * Phase 6 output reshape): Identification properties, MachineryItemState and MachineryOperationMode.
+     * A matched state-machine block wins over a foreign candidate of the same name.
+     */
+    private wireBuildingBlocks() {
+        let itemStateBlock: UaBuildingBlock | null = null
+        let operationModeBlock: UaBuildingBlock | null = null
+        for (const block of this.blocks.values()) {
+            if (block.spec.key === "identification") {
+                block.members.forEach((value, key) => this.identification.set(key, value))
+                block.memberKeyByNodeId.forEach((key, nodeId) => this._identificationKeyByNodeId.set(nodeId, key))
+            }
+            if (block.spec.key === "itemState" && block.currentStateNodeId !== null) {
+                if (itemStateBlock === null || (block.matched && !itemStateBlock.matched)) itemStateBlock = block
+            }
+            if (block.spec.key === "operationMode" && block.currentStateNodeId !== null) {
+                if (operationModeBlock === null || (block.matched && !operationModeBlock.matched)) operationModeBlock = block
+            }
+        }
+        if (itemStateBlock !== null) {
+            this.itemState = itemStateBlock.currentState
+            this.itemStateNodeId = itemStateBlock.currentStateNodeId
+        }
+        if (operationModeBlock !== null) {
+            this.operationMode = operationModeBlock.currentState
+            this.operationModeNodeId = operationModeBlock.currentStateNodeId
         }
     }
 
+    /* Count of modelled blocks per spec key, foreign candidates under 'foreign:<key>'. */
+    buildingBlockCounts(): Map<string, number> {
+        const counts = new Map<string, number>()
+        for (const block of this.blocks.values()) {
+            const key = block.matched ? block.spec.key : `foreign:${block.spec.key}`
+            counts.set(key, (counts.get(key) ?? 0) + 1)
+        }
+        return counts
+    }
+
     toJSON() {
+        const blocksBySpecKey: Record<string, any[]> = {}
+        const foreignBlocks: any[] = []
+        for (const block of this.blocks.values()) {
+            if (block.matched) {
+                const bucket = blocksBySpecKey[block.spec.key] ?? []
+                bucket.push(block.toJSON())
+                blocksBySpecKey[block.spec.key] = bucket
+            } else {
+                foreignBlocks.push(block.toJSON())
+            }
+        }
+        blocksBySpecKey["Foreign"] = foreignBlocks
         return {
             NodeId: this.nodeId,
             Attributes: Object.fromEntries(this.attributes.entries()),
@@ -352,7 +389,8 @@ export class UaMachineryMachine {
             Components: Array.from(this.components.values()).map((c) => { return c.toJSON() }),
             MachineryItemState: this.itemState,
             MachineryOperationMode: this.operationMode,
-            Monitoring: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() })
+            Monitoring: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() }),
+            BuildingBlocks: blocksBySpecKey,
         }
     }
 }

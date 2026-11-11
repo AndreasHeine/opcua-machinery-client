@@ -15,6 +15,8 @@ export const NAMESPACES = {
     /* OPC 10000-x core namespace, always index 0. */
     core: "http://opcfoundation.org/UA/",
     machinery: "http://opcfoundation.org/UA/Machinery/",
+    /* OPC 40001-1 builds functional groups and lifetime variables on OPC 10000-100 (DI). */
+    di: "http://opcfoundation.org/UA/DI/",
     processValues: "http://opcfoundation.org/UA/Machinery/ProcessValues/",
     jobs: "http://opcfoundation.org/UA/Machinery/Jobs/",
     /* OPC 40001-2 builds its process values on the PA-DIM signal types of OPC 30081. */
@@ -40,6 +42,14 @@ export const CORE_TYPES: Record<string, TypeRef> = {
     multiStateValueDiscreteType: { ns: "core", id: 11238, browseName: "MultiStateValueDiscreteType", clause: "OPC 10000-8" },
     exclusiveLimitAlarmType: { ns: "core", id: 9341, browseName: "ExclusiveLimitAlarmType", clause: "OPC 10000-9" },
     exclusiveDeviationAlarmType: { ns: "core", id: 9764, browseName: "ExclusiveDeviationAlarmType", clause: "OPC 10000-9" },
+    stateType: { ns: "core", id: 2307, browseName: "StateType", clause: "OPC 10000-16" },
+    transitionType: { ns: "core", id: 2310, browseName: "TransitionType", clause: "OPC 10000-16" },
+};
+
+/* OPC 10000-100 (DI) types the 40001-1 blocks are built on (§14 MachineryOperationCounterType, §15 LifetimeVariableType). */
+export const DI_TYPES: Record<string, TypeRef> = {
+    functionalGroupType: { ns: "di", id: 1005, browseName: "FunctionalGroupType", clause: "OPC 10000-100 §4.4" },
+    lifetimeVariableType: { ns: "di", id: 468, browseName: "LifetimeVariableType", clause: "OPC 10000-100 §10.2" },
 };
 
 /* OPC 40001-1 §9.2 - the folder that organizes all machine instances. */
@@ -79,12 +89,35 @@ export type BuildingBlockKey =
     | "equipment"
     | "notifications";
 
+/*
+ * One member declared by a block's TypeDefinition (NodeClass + DataType + requirement flag taken from
+ * the spec table). req: M mandatory, O optional, MP mandatory placeholder, OP optional placeholder.
+ * access is the spec's write semantics - this client is read-only and never writes any of them.
+ */
+export type SpecMember = {
+    browseName: string
+    nodeClass: "Object" | "Variable"
+    dataType?: string
+    typeDef?: TypeRef
+    req: "M" | "O" | "MP" | "OP"
+    access?: "RO" | "RW"
+    clause: string
+};
+
 export type BuildingBlockSpec = {
     key: BuildingBlockKey
     /* DefaultInstanceBrowseName(s) defined by the spec for this block. */
     browseNames: string[]
+    /* BrowseNames that additionally count as a candidate for this block: vendors deviate from the spec
+       default (e.g. 'Equipment' instead of 'MachineryEquipment'); candidates are reported as foreign
+       when the TypeDefinition chain does not match. */
+    candidates: string[]
     /* TypeDefinition NodeIds whose subtype chain identifies the block. */
     typeRefs: TypeRef[]
+    /* Members declared by the block TypeDefinition (spec member tables). */
+    members: SpecMember[]
+    /* Members expected on each Object child of the block (e.g. §17 MachineryEquipment children). */
+    childMembers?: SpecMember[]
     spec: string
     /* Feature id used by the coverage report. */
     feature: string
@@ -98,10 +131,29 @@ export const BUILDING_BLOCKS: BuildingBlockSpec[] = [
     {
         key: "identification",
         browseNames: ["Identification"],
+        candidates: ["Identification"],
         typeRefs: [
             MACHINERY_TYPES.machineIdentificationType,
             MACHINERY_TYPES.machineryItemIdentificationType,
             MACHINERY_TYPES.machineryComponentIdentificationType,
+        ],
+        /* Table 16 (§8.3) + Table 14 (§8.2); DeviceRevision is added by §10.2 on components only. */
+        members: [
+            { browseName: "Manufacturer", nodeClass: "Variable", dataType: "LocalizedText", req: "M", access: "RO", clause: "§8.2 / §8.3" },
+            { browseName: "SerialNumber", nodeClass: "Variable", dataType: "String", req: "M", access: "RO", clause: "§8.2 / §8.3" },
+            { browseName: "ProductInstanceUri", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "ManufacturerUri", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "Model", nodeClass: "Variable", dataType: "LocalizedText", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "ProductCode", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "HardwareRevision", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "SoftwareRevision", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "DeviceClass", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§8.3" },
+            { browseName: "YearOfConstruction", nodeClass: "Variable", dataType: "UInt16", req: "O", access: "RO", clause: "§8.2" },
+            { browseName: "MonthOfConstruction", nodeClass: "Variable", dataType: "Byte", req: "O", access: "RO", clause: "§8.2" },
+            { browseName: "InitialOperationDate", nodeClass: "Variable", dataType: "DateTime", req: "O", access: "RO", clause: "§8.2" },
+            { browseName: "AssetId", nodeClass: "Variable", dataType: "String", req: "O", access: "RW", clause: "§8.3 (ITagNameplateType)" },
+            { browseName: "ComponentName", nodeClass: "Variable", dataType: "LocalizedText", req: "O", access: "RW", clause: "§8.3 (ITagNameplateType)" },
+            { browseName: "DeviceRevision", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§10.2 (components only)" },
         ],
         spec: "OPC 40001-1 §8 / §10",
         feature: "machinery.identification",
@@ -109,68 +161,166 @@ export const BUILDING_BLOCKS: BuildingBlockSpec[] = [
     {
         key: "components",
         browseNames: ["Components"],
+        candidates: ["Components"],
         typeRefs: [MACHINERY_TYPES.machineComponentsType],
+        /* Table 27 (§11.2): <Component> Object placeholder; Table 28: each <Component> HasAddIn
+           Identification (MachineryItemIdentificationType) is M - checked on the component itself. */
+        members: [
+            { browseName: "<Component>", nodeClass: "Object", typeDef: CORE_TYPES.baseObjectType, req: "OP", clause: "§11.2" },
+        ],
         spec: "OPC 40001-1 §11",
         feature: "machinery.components",
     },
     {
         key: "itemState",
         browseNames: ["MachineryItemState"],
+        candidates: ["MachineryItemState"],
         typeRefs: [MACHINERY_TYPES.machineryItemStateStateMachineType],
+        /* Table 30 (§12.2): states/transitions exist only on the TypeDefinition; the instance carries
+           CurrentState (inherited from 0:StateMachineType, OPC 10000-16). */
+        members: [
+            { browseName: "CurrentState", nodeClass: "Variable", dataType: "LocalizedText", typeDef: CORE_TYPES.stateMachineType, req: "M", access: "RO", clause: "§12.2 / OPC 10000-16" },
+            { browseName: "NotAvailable", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§12.2 (TypeDefinition only)" },
+            { browseName: "OutOfService", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§12.2 (TypeDefinition only)" },
+            { browseName: "NotExecuting", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§12.2 (TypeDefinition only)" },
+            { browseName: "Executing", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§12.2 (TypeDefinition only)" },
+        ],
         spec: "OPC 40001-1 §12",
         feature: "machinery.itemState",
     },
     {
         key: "operationMode",
         browseNames: ["MachineryOperationMode"],
+        candidates: ["MachineryOperationMode"],
         typeRefs: [MACHINERY_TYPES.machineryOperationModeStateMachineType],
+        /* Table 33 (§13.2): same pattern as §12 - states only on the TypeDefinition, CurrentState on the instance. */
+        members: [
+            { browseName: "CurrentState", nodeClass: "Variable", dataType: "LocalizedText", typeDef: CORE_TYPES.stateMachineType, req: "M", access: "RO", clause: "§13.2 / OPC 10000-16" },
+            { browseName: "None", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§13.2 (TypeDefinition only)" },
+            { browseName: "Maintenance", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§13.2 (TypeDefinition only)" },
+            { browseName: "Setup", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§13.2 (TypeDefinition only)" },
+            { browseName: "Processing", nodeClass: "Object", typeDef: CORE_TYPES.stateType, req: "O", clause: "§13.2 (TypeDefinition only)" },
+        ],
         spec: "OPC 40001-1 §13",
         feature: "machinery.operationMode",
     },
     {
         key: "operationCounters",
         browseNames: ["OperationCounters"],
+        candidates: ["OperationCounters", "MachineryOperationCounters"],
         typeRefs: [MACHINERY_TYPES.machineryOperationCounterType],
+        /* Table 36 (§14.2): Duration is the OPC 10000-3 alias of Double, UInteger the alias of UInt32. */
+        members: [
+            { browseName: "PowerOnDuration", nodeClass: "Variable", dataType: "Duration", req: "O", access: "RO", clause: "§14.2" },
+            { browseName: "OperationDuration", nodeClass: "Variable", dataType: "Duration", req: "O", access: "RO", clause: "§14.2" },
+            { browseName: "OperationCycleCounter", nodeClass: "Variable", dataType: "UInteger", req: "O", access: "RO", clause: "§14.2" },
+        ],
         spec: "OPC 40001-1 §14",
         feature: "machinery.operationCounters",
     },
     {
         key: "lifetimeCounters",
         browseNames: ["LifetimeCounters"],
+        candidates: ["LifetimeCounters", "MachineryLifetimeCounters"],
         typeRefs: [MACHINERY_TYPES.machineryLifetimeCounterType],
+        /* Table 39 (§15.2): at least one <LifetimeVariable> Variable (mandatory placeholder). */
+        members: [
+            { browseName: "<LifetimeVariable>", nodeClass: "Variable", dataType: "Number", typeDef: DI_TYPES.lifetimeVariableType, req: "MP", access: "RO", clause: "§15.2" },
+        ],
         spec: "OPC 40001-1 §15",
         feature: "machinery.lifetimeCounters",
     },
     {
         key: "monitoring",
         browseNames: ["Monitoring"],
+        candidates: ["Monitoring"],
         typeRefs: [MACHINERY_TYPES.monitoringType],
+        /* Table 41 (§16.2): the four subfolder entry points; ProcessValue content is modelled by
+           ua-processvalue.ts (OPC 40001-2), alarms/health by §16 subcomponents. */
+        members: [
+            { browseName: "Status", nodeClass: "Object", typeDef: CORE_TYPES.folderType, req: "O", clause: "§16.2" },
+            { browseName: "Health", nodeClass: "Object", typeDef: CORE_TYPES.folderType, req: "O", clause: "§16.2" },
+            { browseName: "Process", nodeClass: "Object", typeDef: CORE_TYPES.folderType, req: "O", clause: "§16.2" },
+            { browseName: "Consumption", nodeClass: "Object", typeDef: CORE_TYPES.folderType, req: "O", clause: "§16.2" },
+        ],
         spec: "OPC 40001-1 §16",
         feature: "machinery.monitoring",
     },
     {
         key: "equipment",
         browseNames: ["MachineryEquipment"],
+        /* the umati demo server names its equipment folder 'Equipment' - a documented deviation candidate */
+        candidates: ["MachineryEquipment", "Equipment"],
         typeRefs: [MACHINERY_TYPES.machineryEquipmentFolderType, MACHINERY_TYPES.imachineryEquipmentType],
+        /* Table 45 (§17.2): placeholder Object per piece of equipment. */
+        members: [
+            { browseName: "<MachineryEquipment>", nodeClass: "Object", typeDef: CORE_TYPES.baseObjectType, req: "OP", clause: "§17.2" },
+        ],
+        /* Tables 47 / 49 (§17.2 / §17.3): expected Properties of each MachineryEquipment child. */
+        childMembers: [
+            { browseName: "MachineryEquipmentTypeId", nodeClass: "Variable", dataType: "String", req: "M", access: "RW", clause: "§17.3" },
+            { browseName: "Description", nodeClass: "Variable", dataType: "LocalizedText", req: "O", access: "RW", clause: "§17.3" },
+            { browseName: "EquipmentLife", nodeClass: "Variable", dataType: "Number", typeDef: DI_TYPES.lifetimeVariableType, req: "O", access: "RO", clause: "§17.3" },
+            { browseName: "DeviceClass", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§17.2 (IVendorNameplateType)" },
+            { browseName: "SerialNumber", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§17.2 (IVendorNameplateType)" },
+            { browseName: "ManufacturerUri", nodeClass: "Variable", dataType: "String", req: "O", access: "RO", clause: "§17.2 (IVendorNameplateType)" },
+            { browseName: "Model", nodeClass: "Variable", dataType: "LocalizedText", req: "O", access: "RO", clause: "§17.2 (IVendorNameplateType)" },
+            { browseName: "ComponentName", nodeClass: "Variable", dataType: "LocalizedText", req: "O", access: "RW", clause: "§17.2" },
+            { browseName: "AssetId", nodeClass: "Variable", dataType: "String", req: "O", access: "RW", clause: "§17.2" },
+            { browseName: "Location", nodeClass: "Variable", dataType: "String", req: "O", access: "RW", clause: "§17.2" },
+        ],
         spec: "OPC 40001-1 §17",
         feature: "machinery.equipment",
     },
     {
         key: "notifications",
         browseNames: ["Notifications"],
+        /* the umati demo server names its notification folder 'Notification' (singular) */
+        candidates: ["Notifications", "Notification"],
         typeRefs: [MACHINERY_TYPES.notificationsType],
+        /* Table 51 (§18.2): no fixed members - notifications are events or child Objects. */
+        members: [],
         spec: "OPC 40001-1 §18",
         feature: "machinery.notifications",
     },
 ];
 
+/* Table 31 (§12.2) and Table 34 (§13.2) StateNumbers - declared states of the two state machines. */
+export type SpecState = { name: string; stateNumber: number };
+
+export const STATE_TABLES: Partial<Record<BuildingBlockKey, SpecState[]>> = {
+    itemState: [
+        { name: "NotAvailable", stateNumber: 0 },
+        { name: "OutOfService", stateNumber: 1 },
+        { name: "NotExecuting", stateNumber: 2 },
+        { name: "Executing", stateNumber: 3 },
+    ],
+    operationMode: [
+        { name: "None", stateNumber: 0 },
+        { name: "Maintenance", stateNumber: 1 },
+        { name: "Setup", stateNumber: 2 },
+        { name: "Processing", stateNumber: 3 },
+    ],
+};
+
 /* Identification properties expected from §8.3 / §8.4 / §8.5 (nameplate interfaces). */
 export const IDENTIFICATION_PROPERTIES = [
     "Manufacturer", "ManufacturerUri", "ProductCode", "Model", "HardwareRevision", "RevisionCounter",
     "SoftwareRevision", "DeviceManual", "DeviceClass", "SerialNumber", "ProductInstanceUri",
-    "RevisionId", "Id", "YearOfConstruction", "InitialOperationDate", "AssetId", "ComponentName",
-    "Location", "DeviceHealth", "DeviceStatus",
+    "RevisionId", "Id", "YearOfConstruction", "MonthOfConstruction", "DeviceRevision",
+    "InitialOperationDate", "AssetId", "ComponentName", "Location", "DeviceHealth", "DeviceStatus",
 ];
+
+/* Cross-block lookups used by the generic block discovery in ua-machine.ts. */
+export const ALL_BLOCK_TYPE_REFS: TypeRef[] = BUILDING_BLOCKS.flatMap((block) => block.typeRefs);
+
+export function findBuildingBlockByTypeRef(ref: TypeRef): BuildingBlockSpec | undefined {
+    return BUILDING_BLOCKS.find((block) => block.typeRefs.some((blockRef) => blockRef.ns === ref.ns && blockRef.id === ref.id))
+}
+
+export function findBuildingBlockByBrowseName(browseName: string): BuildingBlockSpec | undefined {
+    return BUILDING_BLOCKS.find((block) => block.candidates.includes(browseName))
+}
 
 /* Core-server NodeIds read for the Server section (OPC 10000-4). */
 export const SERVER_NODE_IDS = {

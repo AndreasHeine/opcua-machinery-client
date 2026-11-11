@@ -22,16 +22,20 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   installs SIGINT/SIGTERM shutdown.
 - `src/ua-device.ts` — owns connection, session, one shared subscription, server-status/limits
   reads, machine discovery, the 10s `output.json` refresh and the 60s machine re-scan.
-- `src/ua-machine.ts` → `src/ua-machine-component.ts` + `src/ua-processvalue.ts` — per-node
-  models. All three share the same contract: `initialize()` (browse + read),
+- `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` —
+  per-node models. All four share the same contract: `initialize()` (browse + read),
   `notify(nodeId, dataValue)` (fan-out from the single subscription's `changed` handler),
-  `toJSON()` (the `output.json` / REST shape). New discovered data usually means touching all
-  three hooks plus `collectRelatedNodeIds()` / `collectRelatedVariableNodeIds()` /
-  `subscribeRelatedVariableNodeIds()` in `ua-device.ts`.
+  `toJSON()` (the `output.json` / REST shape). `ua-machine.ts` runs the generic block loop
+  (`discoverBuildingBlocks()` classifies candidate children against `ALL_BLOCK_TYPE_REFS`,
+  `wireBuildingBlocks()` feeds the legacy `Identification` / `MachineryItemState` /
+  `MachineryOperationMode` keys, `buildingBlockCounts()` feeds the startup summary in `ua-device.ts`).
+  New discovered data usually means touching all hooks plus `collectRelatedNodeIds()` /
+  `collectRelatedVariableNodeIds()` / `subscribeRelatedVariableNodeIds()` in `ua-device.ts`.
 - Spec registry (the single source of NodeIds and spec BrowseNames — models import from here instead
-  of inlining an identifier): `src/ua-spec.ts` (namespaces, core/Machinery TypeRefs, building blocks,
-  identification properties, server NodeIds, features), `src/ua-spec-processvalues.ts` (40001-2
-  tables), `src/ua-spec-jobs.ts` (40001-3, declared and used by the Phase 4 job model).
+  of inlining an identifier): `src/ua-spec.ts` (namespaces, core/Machinery/DI TypeRefs, building blocks
+  with per-block `SpecMember` member tables + `STATE_TABLES` StateNumbers + `candidates` BrowseName
+  aliases, identification properties, server NodeIds, features), `src/ua-spec-processvalues.ts`
+  (40001-2 tables), `src/ua-spec-jobs.ts` (40001-3, declared and used by the Phase 4 job model).
 - Shared OPC UA layers used by the models: `src/ua-types.ts` (`UaTypeResolver`: cached
   `HasTypeDefinition` + inverse `HasSubtype` chain, `specNodeId()`, `match()`, `chainOf()`,
   `chainOfNode()`, `namespaceIndexOf()`, `formatChain()`), `src/ua-browse.ts` (`UaRef` with canonical
@@ -74,12 +78,23 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   [ns=3;i=1008] <- ...` match. `UaProcessValue.classifyInstance()` **throws** when the chain does not
   reach `ProcessValueType` — that throw is the filter contract: `UaMachineryMachine.loadProcessValue()`
   catches it and logs a warning, so keep the try/catch around discovery.
+- Building blocks (§2 Phase 2): `discoverBuildingBlocks()` in `ua-machine.ts` classifies every candidate
+  against `ALL_BLOCK_TYPE_REFS`. A candidate that only matches a block **BrowseName or alias** (`Equipment`,
+  singular `Notification`) but whose chain misses the spec TypeRef is still loaded and lands under
+  `BuildingBlocks.Foreign` with its TypeDefinition chain — a server deviation, never claimed as coverage
+  (`MatchedSpecType: null`, count key `foreign:<block>`). Block members are keyed by **BrowseName** (the
+  legacy `Identification` map is wired from them via `wireBuildingBlocks()`; keys changed from DisplayName
+  to BrowseName — identical on the demo server). Machine-level Methods (`SetMachineTime`, `SetMESMessage`,
+  ...) are filtered out by NodeClass before classification and are never read or called. §12/§13 state
+  Objects + transitions exist only on the TypeDefinition; the instance only carries `CurrentState`, so
+  `FoundStates` is normally empty and `SpecStates` (from `STATE_TABLES`) is the spec truth.
 - Startup logs are noisy by design, not a bug. Against `opcua.umati.app:4843` the client finds 24
-  machines, prints one `Machine '<id>' type chain: ...` line per machine, and at `LOG_LEVEL=debug` about
-  28 lines such as
+  machines, prints one `Machine '<id>' type chain: ...` line per machine and the
+  `building blocks of '24' machines: components=5 foreign:equipment=7 ... identification=24 itemState=10
+  operationCounters=1 operationMode=9` summary, and at `LOG_LEVEL=debug` several dozen lines such as
   `Monitoring child 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType' is not a ProcessValueType,
-  reported as foreign type`. On that server only ~9 machines expose `MachineryItemState` and only 1 has
-  `Monitoring` entries, so sparse output is normal. Verify a change by comparing
+  reported as foreign type`. On that server only ~9 machines expose a non-null `MachineryItemState` and
+  only 1 has `Monitoring` entries, so sparse output is normal. Verify a change by comparing
   `GET /machines` and `output.json` before/after, not by log silence.
 - Status codes: model files read through `ua-read.ts`, whose `DecodedValue.ok` is
   `isStatusCodeGoodish()` (Good plus several `Uncertain*` codes), and `statusCodeIsUncertain` marks the
