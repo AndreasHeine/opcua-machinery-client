@@ -139,7 +139,7 @@ export type ProcessValueMethod = {
     displayName: string | null
     specEntry: ProcessValueSpecEntry | null
     specMatch: boolean
-    /* Argument / ArgumentDescription arrays of the Method's InputArgs / OutputArgs Properties */
+    /* Argument / ArgumentDescription arrays of the Method's InputArguments / OutputArguments Properties */
     inputArgs: any | null
     outputArgs: any | null
     note: string
@@ -467,9 +467,8 @@ export class UaProcessValue {
         }
     }
 
-    /*
-     * Table 1 Methods (ZeroPointAdjustment): the read-only client reports their existence and their
-     * InputArgs / OutputArgs declarations, but never calls them.
+    /* Table 1 Methods (ZeroPointAdjustment): the read-only client reports their existence and their
+     * InputArguments / OutputArguments declarations (OPC 10000-3 MethodType), but never calls them.
      */
     private async loadMethod(ref: UaRef, specEntry: ProcessValueChildSpec | null) {
         if (specEntry === null) {
@@ -494,12 +493,12 @@ export class UaProcessValue {
         }
         this.methods.set(ref.nodeId, method)
         this._relatedNodeIds.add(ref.nodeId)
-        const inputArgsRef = await browseChildByBrowseName(this.session, ref.nodeId, "InputArgs", ReferenceTypeIds.HasProperty)
+        const inputArgsRef = await browseChildByBrowseName(this.session, ref.nodeId, "InputArguments", ReferenceTypeIds.HasProperty)
         if (inputArgsRef !== null) {
             const decoded = (await readAttributes(this.session, inputArgsRef.nodeId, [AttributeIds.Value]))[0]
             method.inputArgs = decoded.value
         }
-        const outputArgsRef = await browseChildByBrowseName(this.session, ref.nodeId, "OutputArgs", ReferenceTypeIds.HasProperty)
+        const outputArgsRef = await browseChildByBrowseName(this.session, ref.nodeId, "OutputArguments", ReferenceTypeIds.HasProperty)
         if (outputArgsRef !== null) {
             const decoded = (await readAttributes(this.session, outputArgsRef.nodeId, [AttributeIds.Value]))[0]
             method.outputArgs = decoded.value
@@ -625,8 +624,8 @@ export class UaProcessValue {
                     DisplayName: method.displayName,
                     SpecEntry: method.specEntry,
                     SpecMatch: method.specMatch,
-                    InputArgs: method.inputArgs,
-                    OutputArgs: method.outputArgs,
+                    InputArguments: method.inputArgs,
+                    OutputArguments: method.outputArgs,
                     Note: method.note,
                 }
             }),

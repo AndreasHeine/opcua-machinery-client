@@ -6,6 +6,7 @@ import {
 } from "node-opcua";
 import { UaBuildingBlock } from "./ua-building-block";
 import { UaForeignMonitoringType } from "./ua-foreign-monitoring";
+import { UaForeignJobManagement, UaJobManagement } from "./ua-jobs";
 import { UaMachineryComponent } from "./ua-machine-component";
 import { UaProcessValue } from "./ua-processvalue";
 import { TypeMatch, UaTypeResolver } from "./ua-types";
@@ -21,6 +22,7 @@ import {
     findBuildingBlockByTypeRef,
 } from "./ua-spec";
 import { PROCESS_VALUE_INSTANCE_NAME_PREFIX, PROCESS_VALUE_TYPES } from "./ua-spec-processvalues";
+import { JOB_MANAGEMENT_CANDIDATE_NAMES, JOB_MANAGEMENT_TYPE_REFS } from "./ua-spec-jobs";
 import { log } from "./config";
 
 /*
@@ -100,6 +102,17 @@ export class UaMachineryMachine {
      * Reported, never modelled, never subscribed.
      */
     readonly foreignMonitoring: Map<string, UaForeignMonitoringType> = new Map()
+
+    /**
+     * OPC 40001-3 §8 - chain-matched JobManagementType AddIns of this machine.
+     */
+    readonly jobs: Map<string, UaJobManagement> = new Map()
+
+    /**
+     * OPC 40001-3 - candidates carrying a job-management BrowseName ('JobManagement', vendor alias
+     * 'Jobs') whose chain does not reach JobManagementType. Reported, never modelled, never subscribed.
+     */
+    readonly foreignJobs: Map<string, UaForeignJobManagement> = new Map()
 
     /**
      * Block candidate refs kept from discoverBuildingBlocks() for reuse by discoverMonitoringContent().
@@ -202,6 +215,9 @@ export class UaMachineryMachine {
         for (const processValue of this.monitoring.values()) {
             processValue.notify(nodeId, dataValue)
         }
+        for (const jobs of this.jobs.values()) {
+            jobs.notify(nodeId, dataValue)
+        }
         for (const component of this.components.values()) {
             component.notify(nodeId, dataValue)
         }
@@ -211,6 +227,7 @@ export class UaMachineryMachine {
         await this.loadMachineComponents()
         await this.discoverBuildingBlocks()
         await this.discoverMonitoringContent()
+        await this.discoverJobs()
     }
 
     /*
@@ -456,6 +473,48 @@ export class UaMachineryMachine {
         return counts
     }
 
+    /*
+     * OPC 40001-3 §8 - JobManagement. The candidate set is the cached result of discoverBuildingBlocks()
+     * (blocks folder + direct AddIns/Components, Methods already excluded). Chain-matched candidates are
+     * modelled by UaJobManagement; candidates that only carry the spec instance BrowseName
+     * 'JobManagement' (Table 5) or the vendor alias 'Jobs' (demo: PlasticsRubber JobsType) are reported
+     * as foreign - vertical companion-spec job content is out of the 40001-1/-2/-3 scope.
+     */
+    async discoverJobs() {
+        for (const ref of this._blockCandidateRefs) {
+            const match = await this.resolver.match(ref.nodeId, JOB_MANAGEMENT_TYPE_REFS)
+            if (match.ref !== undefined) {
+                const jobs = new UaJobManagement(this.session, this.resolver, ref, match)
+                await jobs.initialize()
+                this.jobs.set(ref.nodeId, jobs)
+                this._relatedNodeIds.add(ref.nodeId)
+                jobs._relatedNodeIds.forEach((nodeId) => this._relatedNodeIds.add(nodeId))
+                jobs._relatedVariableNodeIds.forEach((nodeId) => this._relatedVariableNodeIds.add(nodeId))
+                continue
+            }
+            if (!JOB_MANAGEMENT_CANDIDATE_NAMES.includes(ref.browseName)) continue
+            const entry = new UaForeignJobManagement(
+                this.session,
+                this.resolver,
+                ref,
+                match,
+                `BrowseName is one of the OPC 40001-3 instance names but the TypeDefinition chain does not reach the JobManagementType of namespace '${NAMESPACES.jobs}'`,
+            )
+            await entry.initialize()
+            this.foreignJobs.set(ref.nodeId, entry)
+            entry._relatedNodeIds.forEach((nodeId) => this._relatedNodeIds.add(nodeId))
+            log.debug(`OPC UA Client: machine '${this.nodeId}' foreign job candidate '${ref.nodeId}' TypeDefinition='${match.typeDefinition?.browseName ?? "?"}'`)
+        }
+    }
+
+    /* Count of modelled JobManagement AddIns, foreign candidates under 'foreign:jobs'. */
+    jobsCounts(): Map<string, number> {
+        const counts = new Map<string, number>()
+        if (this.jobs.size > 0) counts.set("jobs", this.jobs.size)
+        if (this.foreignJobs.size > 0) counts.set("foreign:jobs", this.foreignJobs.size)
+        return counts
+    }
+
     toJSON() {
         const blocksBySpecKey: Record<string, any[]> = {}
         const foreignBlocks: any[] = []
@@ -479,6 +538,8 @@ export class UaMachineryMachine {
             MachineryOperationMode: this.operationMode,
             Monitoring: Array.from(this.monitoring.values()).map((c) => { return c.toJSON() }),
             ForeignMonitoringTypes: Array.from(this.foreignMonitoring.values()).map((f) => { return f.toJSON() }),
+            Jobs: Array.from(this.jobs.values()).map((j) => { return j.toJSON() }),
+            ForeignJobCandidates: Array.from(this.foreignJobs.values()).map((f) => { return f.toJSON() }),
             BuildingBlocks: blocksBySpecKey,
         }
     }

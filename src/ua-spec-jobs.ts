@@ -47,37 +47,65 @@ export const JOB_MANAGEMENT_CHILDREN = [
     },
 ];
 
+/* OPC 40001-3 8.1 Table 5: DefaultInstanceBrowseName of JobManagementType is 'JobManagement'.
+ * Candidate BrowseNames the discovery accepts before the TypeDefinition chain decides; 'Jobs' is the
+ * vendor alias on the umati demo server (PlasticsRubber IMM2MES 'JobsType', reported as foreign). */
+export const JOB_MANAGEMENT_INSTANCE_NAME = "JobManagement";
+export const JOB_MANAGEMENT_CANDIDATE_NAMES: string[] = [JOB_MANAGEMENT_INSTANCE_NAME, "Jobs"];
+
+/* OPC 40001-3 8.1 Table 4 - Properties declared on the AddIn itself. */
+export const JOB_MANAGEMENT_PROPERTIES = [
+    {
+        browseName: "DefaultInstanceBrowseName",
+        dataType: "QualifiedName",
+        occurrence: "Declared",
+        access: "RO",
+        feature: "jobs.management",
+        clause: "OPC 40001-3 8.1 Table 4 / Table 5",
+        description: "Default BrowseName for instances of the type ('JobManagement' per Table 5).",
+    },
+];
+
 /* OPC 10031-4 6.2.1.2 Table 12 - JobOrderControl (ISA95JobOrderReceiverObjectType) members. */
 export const JOB_ORDER_CONTROL_MEMBERS = {
     /* Read-only list Variables. */
     variables: [
-        { browseName: "JobOrderList", dataType: "ISA95JobOrderAndStateDataType[]", occurrence: "Mandatory", feature: "jobs.orderList", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "WorkMaster", dataType: "ISA95WorkMasterDataType[]", occurrence: "Mandatory", feature: "jobs.workMaster", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "MaterialClassID", dataType: "String[]", occurrence: "Mandatory", feature: "jobs.material", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "MaterialDefinitionID", dataType: "String[]", occurrence: "Mandatory", feature: "jobs.material", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "EquipmentID", dataType: "String[]", occurrence: "Mandatory", feature: "jobs.equipment", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "PhysicalAssetID", dataType: "String[]", occurrence: "Mandatory", feature: "jobs.physicalAsset", clause: "OPC 10031-4 6.2.1.2 Table 12" },
-        { browseName: "PersonnelID", dataType: "String[]", occurrence: "Mandatory", feature: "jobs.personnel", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        {
+            browseName: "CurrentState",
+            dataType: "LocalizedText",
+            occurrence: "Mandatory",
+            access: "RO",
+            feature: "jobs.stateMachine",
+            clause: "OPC 10031-4 6.2.1.2",
+            description: "CurrentState inherited from FiniteStateMachineType. Per spec it shall always return a Bad StatusCode - the receiver is only state metadata, real job states live in JobOrderList. A server that returns Good here is a deviation worth showing.",
+        },
+        { browseName: "JobOrderList", dataType: "ISA95JobOrderAndStateDataType[]", occurrence: "Mandatory", access: "RO", feature: "jobs.orderList", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "WorkMaster", dataType: "ISA95WorkMasterDataType[]", occurrence: "Mandatory", access: "RO", feature: "jobs.workMaster", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "MaterialClassID", dataType: "String[]", occurrence: "Mandatory", access: "RO", feature: "jobs.material", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "MaterialDefinitionID", dataType: "String[]", occurrence: "Mandatory", access: "RO", feature: "jobs.material", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "EquipmentID", dataType: "String[]", occurrence: "Mandatory", access: "RO", feature: "jobs.equipment", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "PhysicalAssetID", dataType: "String[]", occurrence: "Mandatory", access: "RO", feature: "jobs.physicalAsset", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "PersonnelID", dataType: "String[]", occurrence: "Mandatory", access: "RO", feature: "jobs.personnel", clause: "OPC 10031-4 6.2.1.2 Table 12" },
     ],
     properties: [
-        { browseName: "MaxDownloadableJobOrders", dataType: "UInt16", occurrence: "Mandatory", feature: "jobs.capacity", clause: "OPC 10031-4 6.2.1.2 Table 12" },
+        { browseName: "MaxDownloadableJobOrders", dataType: "UInt16", occurrence: "Mandatory", access: "RO", feature: "jobs.capacity", clause: "OPC 10031-4 6.2.1.2 Table 12" },
     ],
     /*
-     * Control Methods - reported with their argument signatures, never invoked.
-     * The write-side facet of OPC 40001-3 is deliberately out of scope for this demo client.
+     * Control Methods - Table 12 declares every one Optional. They are reported with their argument
+     * signatures, never invoked: the write-side facet of OPC 40001-3 is deliberately out of scope.
      */
     methods: [
-        { browseName: "Store", clause: "OPC 10031-4 6.2.1.3" },
-        { browseName: "StoreAndStart", clause: "OPC 10031-4 6.2.1.4" },
-        { browseName: "Start", clause: "OPC 10031-4 6.2.1.5" },
-        { browseName: "RevokeStart", clause: "OPC 10031-4 6.2.1.6" },
-        { browseName: "Pause", clause: "OPC 10031-4 6.2.1.7" },
-        { browseName: "Resume", clause: "OPC 10031-4 6.2.1.8" },
-        { browseName: "Update", clause: "OPC 10031-4 6.2.1.9" },
-        { browseName: "Abort", clause: "OPC 10031-4 6.2.1.10" },
-        { browseName: "Stop", clause: "OPC 10031-4 6.2.1.10" },
-        { browseName: "Cancel", clause: "OPC 10031-4 6.2.1.12" },
-        { browseName: "Clear", clause: "OPC 10031-4 6.2.1.13" },
+        { browseName: "Store", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.3" },
+        { browseName: "StoreAndStart", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.4" },
+        { browseName: "Start", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.5" },
+        { browseName: "RevokeStart", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.6" },
+        { browseName: "Pause", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.7" },
+        { browseName: "Resume", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.8" },
+        { browseName: "Update", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.9" },
+        { browseName: "Abort", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.10" },
+        { browseName: "Stop", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.10" },
+        { browseName: "Cancel", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.12" },
+        { browseName: "Clear", occurrence: "Optional", clause: "OPC 10031-4 6.2.1.13" },
     ],
     /* State machine states (the CurrentState of this state machine is defined as Bad on purpose). */
     states: ["NotAllowedToStart", "AllowedToStart", "Running", "Interrupted", "Ended", "Aborted"],
@@ -87,11 +115,13 @@ export const JOB_ORDER_CONTROL_MEMBERS = {
 /* OPC 10031-4 6.2.7.1 - JobOrderResults (ISA95JobResponseProviderObjectType) members. */
 export const JOB_ORDER_RESULTS_MEMBERS = {
     variables: [
-        { browseName: "JobOrderResponseList", dataType: "ISA95JobResponseDataType[]", occurrence: "Optional", feature: "jobs.responseList", clause: "OPC 10031-4 6.2.7.1" },
+        { browseName: "JobOrderResponseList", dataType: "ISA95JobResponseDataType[]", occurrence: "Optional", access: "RO", feature: "jobs.responseList", clause: "OPC 10031-4 6.2.7" },
+    ],
+    properties: [
     ],
     methods: [
-        { browseName: "RequestJobResponseByJobOrderID", clause: "OPC 10031-4 6.2.7.2" },
-        { browseName: "RequestJobResponseByJobOrderState", clause: "OPC 10031-4 6.2.7.3" },
+        { browseName: "RequestJobResponseByJobOrderID", occurrence: "Optional", clause: "OPC 10031-4 6.2.7.2" },
+        { browseName: "RequestJobResponseByJobOrderState", occurrence: "Optional", clause: "OPC 10031-4 6.2.7.3" },
     ],
     generatesEvent: JOB_TYPES.isa95JobOrderStatusEventType,
 };

@@ -366,4 +366,5 @@ export const FEATURES: FeatureSpec[] = [
     { id: "processValues.zeroPoint", spec: "OPC 40001-2 §7.1 / §8", title: "ZeroPointAdjustment method and event type" },
     { id: "jobs.management", spec: "OPC 40001-3 §8", title: "JobManagementType AddIn (read-only)" },
     { id: "jobs.orders", spec: "OPC 40001-3 §6 / OPC 10031-4", title: "JobOrderControl / JobOrderResults lists" },
+    { id: "jobs.stateMachine", spec: "OPC 10031-4 6.2.1.2", title: "JobOrderControl state machine (CurrentState / SpecStates)" },
 ];

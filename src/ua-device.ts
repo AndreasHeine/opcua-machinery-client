@@ -875,8 +875,9 @@ export class OpcUaDeviceProxyClass {
     }
 
     /*
-     * Startup coverage line: how many OPC 40001-1 building blocks were found across all machines.
-     * 'foreign:<key>' counts candidates that carry a spec block BrowseName but no spec TypeDefinition -
+     * Startup coverage lines: how many OPC 40001-1 building blocks and OPC 40001-3 JobManagement AddIns
+     * were found across all machines.
+     * 'foreign:<key>' counts candidates that carry a spec BrowseName but no spec TypeDefinition -
      * deviations of the server, not our coverage.
      */
     private logBuildingBlockSummary() {
@@ -891,6 +892,17 @@ export class OpcUaDeviceProxyClass {
             .map(([key, count]) => `${key}=${count}`)
             .join(' ')
         console.log(`OPC UA Client: building blocks of '${this.machines.size}' machines: ${parts.length > 0 ? parts : 'none found'}`)
+        const jobTotals = new Map<string, number>()
+        for (const machine of this.machines.values()) {
+            for (const [key, count] of machine.jobsCounts().entries()) {
+                jobTotals.set(key, (jobTotals.get(key) ?? 0) + count)
+            }
+        }
+        const jobParts = Array.from(jobTotals.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([key, count]) => `${key}=${count}`)
+            .join(' ')
+        console.log(`OPC UA Client: job management of '${this.machines.size}' machines: ${jobParts.length > 0 ? jobParts : 'none found - OPC 40001-3 not exposed by this server'}`)
     }
 
     private async findMachinesOnServer() {

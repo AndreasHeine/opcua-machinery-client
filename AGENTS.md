@@ -22,23 +22,26 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   installs SIGINT/SIGTERM shutdown.
 - `src/ua-device.ts` — owns connection, session, one shared subscription, server-status/limits
   reads, machine discovery, the 10s `output.json` refresh and the 60s machine re-scan.
-- `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` + `src/ua-foreign-monitoring.ts` —
+- `src/ua-machine.ts` → `src/ua-building-block.ts` + `src/ua-machine-component.ts` + `src/ua-processvalue.ts` + `src/ua-foreign-monitoring.ts` + `src/ua-jobs.ts` —
   per-node models. All of them share the same contract: `initialize()` (browse + read),
   `notify(nodeId, dataValue)` (fan-out from the single subscription's `changed` handler),
   `toJSON()` (the `output.json` / REST shape). `ua-machine.ts` runs the generic block loop
   (`discoverBuildingBlocks()` classifies candidate children against `ALL_BLOCK_TYPE_REFS`,
   `wireBuildingBlocks()` feeds the legacy `Identification` / `MachineryItemState` /
-  `MachineryOperationMode` keys, `buildingBlockCounts()` feeds the startup summary in `ua-device.ts`)
-  and the Phase 3 monitoring scan (`discoverMonitoringContent()` / `scanMonitoringSubtree()` descend
+  `MachineryOperationMode` keys, `buildingBlockCounts()` feeds the startup summary in `ua-device.ts`),
+  the Phase 3 monitoring scan (`discoverMonitoringContent()` / `scanMonitoringSubtree()` descend
   Monitoring blocks and named-`ProcessValue*` lookalikes; chain-matched instances become `UaProcessValue`,
-  everything else a `UaForeignMonitoringType` entry).
+  everything else a `UaForeignMonitoringType` entry) and the Phase 4 job scan (`discoverJobs()`
+  reclassifies the same block candidates against `JOB_MANAGEMENT_TYPE_REFS` → `UaJobManagement`,
+  name-only candidates → `UaForeignJobManagement`; `jobsCounts()` feeds the second summary line).
   New discovered data usually means touching all hooks plus `collectRelatedNodeIds()` /
   `collectRelatedVariableNodeIds()` / `subscribeRelatedVariableNodeIds()` in `ua-device.ts`.
 - Spec registry (the single source of NodeIds and spec BrowseNames — models import from here instead
   of inlining an identifier): `src/ua-spec.ts` (namespaces, core/Machinery/DI TypeRefs, building blocks
   with per-block `SpecMember` member tables + `STATE_TABLES` StateNumbers + `candidates` BrowseName
   aliases, identification properties, server NodeIds, features), `src/ua-spec-processvalues.ts`
-  (40001-2 tables), `src/ua-spec-jobs.ts` (40001-3, declared and used by the Phase 4 job model).
+  (40001-2 tables), `src/ua-spec-jobs.ts` (40001-3 §8 + OPC 10031-4 member/method tables, used by the
+  Phase 4 job model).
 - Shared OPC UA layers used by the models: `src/ua-types.ts` (`UaTypeResolver`: cached
   `HasTypeDefinition` + inverse `HasSubtype` chain, `specNodeId()`, `match()`, `chainOf()`,
   `chainOfNode()`, `namespaceIndexOf()`, `formatChain()`), `src/ua-browse.ts` (`UaRef` with canonical
@@ -69,8 +72,9 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   against an empty set and chunks the rest below `MaxMonitoredItemsPerCall` /
   `MaxMonitoredItemsPerSubscription` minus `SUBSCRIPTION_SLACK`.
 - Hardcoded OPC constants live in `src/ua-spec*.ts` (the only place NodeIds and spec BrowseNames are
-  declared): namespace URIs `http://opcfoundation.org/UA/Machinery/` and
-  `.../Machinery/ProcessValues/`, Machines folder NodeId `ns=<machineryIndex>;i=1001`, server variables
+  declared): namespace URIs `http://opcfoundation.org/UA/Machinery/`, `.../Machinery/ProcessValues/`,
+  `.../Machinery/Jobs/` and `.../ISA95-JOBCONTROL_V2/`, Machines folder NodeId
+  `ns=<machineryIndex>;i=1001`, server variables
   `i=2256 / 2259 / 2267 / 2255 / 2269`, operational limits `i=24098 / 24104 / 11714 / 11709 / 11705 /
   11712 / 11707`.
 - Type definition classification is by **`HasSubtype` chain** (`UaTypeResolver` in `ua-types.ts`), not by
@@ -105,15 +109,36 @@ variables, writes a snapshot to `output.json` every 10s, and serves a read-only 
   `ANALOG_SIGNAL_PROPERTIES` / `SETPOINT_CHILDREN`): BrowseName picks the entry, the chain decides
   `SpecMatch`; standardized enum labels come from the child's **EnumValues Property** plus the
   `PROCESS_VALUE_*_ENUMS` tables (never decode the Value as an enum array); alarm Objects and Methods are
-  reported (InputArgs/OutputArgs read, never called, never subscribed).
+  reported (InputArguments/OutputArguments read, never called, never subscribed).
+- Jobs (Phase 4): `discoverJobs()` reuses the cached `_blockCandidateRefs` from the block loop — no new
+  browse roots. Chain match against `JOB_MANAGEMENT_TYPE_REFS` → `UaJobManagement` (`src/ua-jobs.ts`),
+  which models the two ISA-95 containers `JobOrderControl`/`JobOrderResults` (`UaJobOrderContainer`:
+  declared list Variables like `JobOrderList`/`WorkMaster` are subscribed, static Properties like
+  `MaxDownloadableJobOrders` read once, Methods reported with their argument signatures, never called);
+  name-only candidates (`JOB_MANAGEMENT_CANDIDATE_NAMES` = spec name `JobManagement` + vendor alias
+  `Jobs`, demo: PlasticsRubber `JobsType`) land in `ForeignJobCandidates` with **child names only** —
+  vertical companion-spec job payloads stay out of scope. Method argument Properties are the standard
+  OPC 10000-3 BrowseNames **`InputArguments`/`OutputArguments`** — `InputArgs`/`OutputArgs` matches
+  nothing on the demo server. Per OPC 10031-4 6.2.1.2 the receiver's inherited `CurrentState` "shall
+  always return a Bad StatusCode"; a server answering Good (the demo returns "Running") is recorded as a
+  `CurrentStateNote` deviation, and the §12/§13 rule applies here too: states/transitions live on the
+  TypeDefinition, so `FoundStates` is normally empty and `SpecStates` is the spec truth.
+- `normalizeValue()` in `ua-read.ts` recurses into array **items via `normalizeValue`** (not
+  `normalizeScalar`), so structure objects inside Variant arrays (ISA-95 job types, EnumValueType[], ...)
+  collapse their nested LocalizedText fields at any depth. Nested `Variant` instances normalize to the
+  `{dataType, arrayType, value, dimensions}` numeric-enum form — do not "restore" the old scalar-only
+  array behaviour.
 - Startup logs are noisy by design, not a bug. Against `opcua.umati.app:4843` the client finds 24
-  machines, prints one `Machine '<id>' type chain: ...` line per machine and the
+  machines, prints one `Machine '<id>' type chain: ...` line per machine, the
   `building blocks of '24' machines: components=5 foreign:equipment=7 ... identification=24 itemState=10
-  operationCounters=1 operationMode=9` summary, and at `LOG_LEVEL=debug` several dozen lines such as
-  `foreign monitoring 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType'`. On that server only ~9
-  machines expose a non-null `MachineryItemState`, only 1 machine has real `Monitoring` entries (2
-  ProcessValues) and 9 machines report `ForeignMonitoringTypes` (~33 entries), so sparse output is
-  normal. Verify a change by comparing `GET /machines` and `output.json` before/after, not by log silence.
+  operationCounters=1 operationMode=9` summary and the
+  `job management of '24' machines: foreign:jobs=1 jobs=1` line, and at `LOG_LEVEL=debug` several dozen
+  lines such as `foreign monitoring 'ns=30;i=5018' TypeDefinition='ChannelMonitoringType'`. On that
+  server only ~9 machines expose a non-null `MachineryItemState`, only 1 machine has real `Monitoring`
+  entries (2 ProcessValues), 9 machines report `ForeignMonitoringTypes` (~33 entries), 1 machine has a
+  real JobManagement AddIn (`ns=49;s=MyControledMachine`) and 1 a foreign `Jobs` candidate, so sparse
+  output is normal. Verify a change by comparing `GET /machines` and `output.json` before/after, not by
+  log silence.
 - Status codes: model files read through `ua-read.ts`, whose `DecodedValue.ok` is
   `isStatusCodeGoodish()` (Good plus several `Uncertain*` codes), and `statusCodeIsUncertain` marks the
   rest. `ua-device.ts` still mixes `isStatusCodeGoodish()` with direct

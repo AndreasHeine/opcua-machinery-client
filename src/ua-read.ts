@@ -125,7 +125,11 @@ function normalizeScalar(value: any): any {
 
 export function normalizeValue(value: any): any {
     if (value === null || value === undefined) return null
-    if (Array.isArray(value)) return value.map((item) => normalizeScalar(item))
+    if (Array.isArray(value)) {
+        /* recurse per item, not normalizeScalar: Variant arrays hold structure objects (ISA-95 data
+           types, EnumValueType[], ...) whose nested LocalizedText fields must collapse too */
+        return value.map((item) => normalizeValue(item))
+    }
     if (isPlainObject(value)) {
         const namedText = collapseNamedText(value)
         if (namedText !== undefined) return namedText
